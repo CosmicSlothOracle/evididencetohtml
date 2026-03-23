@@ -9,7 +9,6 @@ Usage:
     python3 evidence2html.py -e path/to/evidence/ -o report.html
 """
 
-import argparse
 import datetime
 import glob
 import hashlib
@@ -749,64 +748,78 @@ def generate_html(xml_file, xsl_file, output_html):
 
 
 # ---------------------------------------------------------------------------
-# CLI
+# Interactive CLI
 # ---------------------------------------------------------------------------
 
 def main():
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    default_xsl = os.path.join(script_dir, "cosmic_clean.xsl")
+    xsl_file = os.path.join(script_dir, "cosmic_clean.xsl")
+    ascii_dir = os.path.join(script_dir, "ascii_arts")
 
-    parser = argparse.ArgumentParser(
-        description="Collect pen-test evidence and generate an HTML report.",
-        epilog="Examples:\n"
-               "  %(prog)s ./evidence/\n"
-               "  %(prog)s -e ./evidence/ scan1.xml scan2.xml\n"
-               "  %(prog)s -e ./evidence/ -n nuclei.json -o report.html\n",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
-    parser.add_argument("input_files", nargs="*", metavar="NMAP_XML",
-                        help="Nmap XML files to merge (optional)")
-    parser.add_argument("-e", "--evidence-dir", metavar="DIR",
-                        help="Directory with evidence files (auto-detected from first "
-                             "positional arg if it's a directory)")
-    parser.add_argument("-o", "--output", default="report.html",
-                        help="HTML output path (default: report.html)")
-    parser.add_argument("-x", "--xml-out", default="merged_scan.xml",
-                        help="Intermediate merged XML (default: merged_scan.xml)")
-    parser.add_argument("-s", "--stylesheet", default=default_xsl,
-                        help="XSL stylesheet (default: cosmic_clean.xsl next to this script)")
-    parser.add_argument("-n", "--nuclei", default=None, metavar="JSON",
-                        help="Nuclei JSONL output to inject")
-    parser.add_argument("-a", "--ascii-dir", default=None, metavar="DIR",
-                        help="Directory with ASCII art .txt files (one per person, "
-                             "keyed by filename)")
-    args = parser.parse_args()
-
-    # If the first positional arg is a directory, treat it as the evidence dir
-    if args.input_files and os.path.isdir(args.input_files[0]) and not args.evidence_dir:
-        args.evidence_dir = args.input_files.pop(0)
-
-    # Auto-detect Nmap XMLs inside evidence dir if none given explicitly
-    if not args.input_files and args.evidence_dir:
-        for pattern in ("scan_*.xml", "nmap*.xml", "portscan.xml", "services.xml"):
-            found = sorted(glob.glob(os.path.join(args.evidence_dir, pattern)))
-            found = [f for f in found if not os.path.basename(f).startswith("merged_scan")]
-            args.input_files.extend(found)
-        if args.input_files:
-            print(f"[*] Auto-detected {len(args.input_files)} Nmap XML(s) in {args.evidence_dir}")
-
-    evidence_dir = args.evidence_dir or (
-        os.path.dirname(os.path.abspath(args.xml_out)) if not args.input_files else None
-    )
-
-    if not args.stylesheet or not os.path.isfile(args.stylesheet):
-        print(f"[-] XSL stylesheet not found: {args.stylesheet}")
+    if not os.path.isfile(xsl_file):
+        print(f"[-] XSL stylesheet not found: {xsl_file}")
         sys.exit(1)
 
-    if merge_nmap_xml(args.input_files, args.xml_out, args.stylesheet,
-                      args.nuclei, evidence_dir=evidence_dir,
-                      ascii_dir=args.ascii_dir):
-        generate_html(args.xml_out, args.stylesheet, args.output)
+    print("\n" + "=" * 60)
+    print("Evidence to HTML Report Generator")
+    print("=" * 60)
+
+    evidence_dir = input("\n[?] Enter evidence directory path: ").strip()
+    if not evidence_dir:
+        print("[-] No directory specified.")
+        sys.exit(1)
+
+    evidence_dir = os.path.abspath(evidence_dir)
+    if not os.path.isdir(evidence_dir):
+        print(f"[-] Directory not found: {evidence_dir}")
+        sys.exit(1)
+
+    output_html = input("\n[?] HTML output filename (default: report.html): ").strip() or "report.html"
+    xml_file = "merged_scan.xml"
+
+    nuclei_json = None
+    nuclei_path = os.path.join(evidence_dir, "nuclei.json")
+    if os.path.exists(nuclei_path):
+        use_nuclei = input(f"\n[?] Found nuclei.json — include it? (y/n, default: y): ").strip().lower()
+        if use_nuclei != "n":
+            nuclei_json = nuclei_path
+            print(f"[+] Using: {nuclei_json}")
+
+    xml_files = []
+    for pattern in ("scan_*.xml", "nmap*.xml", "portscan.xml", "services.xml"):
+        found = sorted(glob.glob(os.path.join(evidence_dir, pattern)))
+        found = [f for f in found if not os.path.basename(f).startswith("merged_scan")]
+        xml_files.extend(found)
+
+    if xml_files:
+        print(f"\n[+] Found {len(xml_files)} Nmap XML file(s):")
+        for f in xml_files:
+            print(f"    - {os.path.basename(f)}")
+    else:
+        print("\n[*] No Nmap XMLs found — building evidence-only report")
+
+    if os.path.isdir(ascii_dir):
+        ascii_files = sorted(glob.glob(os.path.join(ascii_dir, "*.txt")))
+        if ascii_files:
+            print(f"\n[+] Found {len(ascii_files)} ASCII art file(s):")
+            for f in ascii_files:
+                print(f"    - {os.path.basename(f)}")
+        else:
+            print(f"\n[*] ASCII art directory exists but is empty: {ascii_dir}")
+    else:
+        print(f"\n[*] No ASCII art directory at: {ascii_dir}")
+
+    print("\n" + "=" * 60)
+    print("Starting pipeline…")
+    print("=" * 60 + "\n")
+
+    if merge_nmap_xml(xml_files, xml_file, xsl_file,
+                      nuclei_json, evidence_dir=evidence_dir,
+                      ascii_dir=ascii_dir if os.path.isdir(ascii_dir) else None):
+        generate_html(xml_file, xsl_file, output_html)
+        print("\n" + "=" * 60)
+        print(f"[✓] Done! Report: {os.path.abspath(output_html)}")
+        print("=" * 60 + "\n")
 
 
 if __name__ == "__main__":

@@ -2,15 +2,14 @@
 
 Turn pen-test evidence files into a single, self-contained HTML report.
 
-Drop your tool outputs (Nmap XML, ffuf JSON, testssl, sqlmap logs, banners, …)
-into a folder, run one command, get a styled report you can hand in or archive.
+Drop your tool outputs into a folder, run one command, answer a few prompts, get a styled report.
 
 ## Requirements
 
 - Python 3.8+
 - `xsltproc` — ships with Kali; on Debian/Ubuntu: `sudo apt install xsltproc`
 
-No pip packages needed. Everything runs on stdlib.
+No pip packages. Everything runs on stdlib.
 
 ## Quick start
 
@@ -18,52 +17,55 @@ No pip packages needed. Everything runs on stdlib.
 git clone https://github.com/CosmicSlothOracle/evididencetohtml.git
 cd evididencetohtml
 
-# point it at your evidence directory
-python3 evidence2html.py /path/to/evidence/
-
-# output: report.html + merged_scan.xml in the current directory
+python3 evidence2html.py
 ```
 
-## Usage
+The script will prompt you for the evidence directory, then do the rest:
+- Auto-detects Nmap XMLs and Nuclei results
+- Collects and deduplicates evidence files
+- Loads ASCII art (if present in `ascii_arts/` subdir)
+- Merges everything into one XML
+- Transforms to HTML with xsltproc
 
-```
-python3 evidence2html.py [OPTIONS] [NMAP_XML ...]
-```
+Output: `report.html` + `merged_scan.xml` in your current directory.
 
-| Flag | Default | What it does |
-|------|---------|--------------|
-| `-e DIR` | auto-detected | Evidence directory |
-| `-o FILE` | `report.html` | HTML output path |
-| `-x FILE` | `merged_scan.xml` | Intermediate merged XML |
-| `-s FILE` | `cosmic_clean.xsl` | XSL stylesheet |
-| `-n FILE` | — | Nuclei JSONL to inject |
-| `-a DIR` | — | Directory with ASCII art `.txt` files |
+## Workflow
 
-If the first positional argument is a directory, it is treated as the evidence
-dir. Nmap XMLs inside it (`scan_*.xml`, `nmap*.xml`) are picked up automatically.
+1. Organize evidence files in a folder (or multiple folders):
+   ```
+   my_evidence/
+   ├── scan_tcp.xml
+   ├── scan_udp.xml
+   ├── nuclei.json
+   ├── evidence_ffuf_results.json
+   ├── evidence_sqlmap_findings.txt
+   ├── banner_ssh.txt
+   └── …
+   ```
 
-### Examples
+2. Add optional personalized ASCII art:
+   ```
+   ascii_arts/
+   ├── alice.txt
+   ├── bob.txt
+   └── cosmic_header.txt
+   ```
 
-```bash
-# evidence only, no Nmap scans
-python3 evidence2html.py ./my_evidence/
+3. Run:
+   ```bash
+   python3 evidence2html.py
+   ```
 
-# evidence + explicit Nmap XMLs
-python3 evidence2html.py -e ./my_evidence/ scan_tcp.xml scan_udp.xml
+4. Answer the prompts:
+   - Evidence directory path
+   - Output HTML filename (default: `report.html`)
+   - Whether to include `nuclei.json` if found
 
-# custom output name
-python3 evidence2html.py -o pentest_report.html ./my_evidence/
-
-# include Nuclei results
-python3 evidence2html.py -e ./my_evidence/ -n nuclei_output.json
-
-# include personalized ASCII art
-python3 evidence2html.py -a ./ascii_arts/ ./my_evidence/
-```
+5. Done. Open `report.html`.
 
 ## Evidence file naming
 
-The script auto-detects tool outputs by filename prefix:
+Files are auto-detected and classified by prefix. The script looks for:
 
 | Prefix | Tool |
 |--------|------|
@@ -82,28 +84,15 @@ The script auto-detects tool outputs by filename prefix:
 | `banner_*` | nc/bash |
 | `*.hex` | nc/xxd |
 
-Any file matching `evidence_*` will be included regardless of prefix — unknown
-tools just won't get structured parsing.
-
-## ASCII art
-
-Use `-a` to point at a directory of `.txt` files. Each file becomes a named art
-block in the report, keyed by filename (without extension). Put one file per
-person or per target — whatever makes sense for your workflow.
-
-```
-ascii_arts/
-├── alice.txt
-├── bob.txt
-└── cosmic_header.txt
-```
+Any file matching `evidence_*` is included regardless. Unknown prefixes won't get structured parsing, but raw content appears in the report.
 
 ## How it works
 
-1. **Collect** — reads all matching files from the evidence directory, deduplicates, classifies by tool.
-2. **Merge** — if Nmap XMLs are provided, merges hosts/ports/scripts across scans into one XML. Otherwise builds a minimal XML envelope.
-3. **Inject** — structured findings (ffuf hits, SQLi confirmations, TLS vulns, …) are parsed and embedded as metadata.
-4. **Transform** — `xsltproc` applies `cosmic_clean.xsl` to produce the final HTML with embedded styles and fonts.
+1. **Collect** — reads all matching files from the evidence directory, deduplicates by content hash, classifies by tool.
+2. **Parse** — structured findings are extracted from JSON/text outputs (ffuf, SQLi, testssl, netexec, metasploit, subdomains).
+3. **Merge** — if Nmap XMLs exist, merges hosts/ports/scripts into one XML. Otherwise builds a minimal envelope just for evidence.
+4. **Inject** — ASCII art (if present) and structured findings are embedded as XML metadata.
+5. **Transform** — `xsltproc` applies `cosmic_clean.xsl` to produce final HTML with embedded styles and fonts.
 
 ## License
 
