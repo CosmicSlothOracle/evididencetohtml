@@ -21,6 +21,15 @@ import sys
 import xml.etree.ElementTree as ET
 from urllib.parse import urlparse
 
+DEFAULT_CYBERSTEPPER_ART = r"""
+   ______      __                _____ __                             
+  / ____/_  __/ /_  ___  _____  / ___// /____  ____  ____  ___  _____
+ / /   / / / / __ \/ _ \/ ___/  \__ \/ __/ _ \/ __ \/ __ \/ _ \/ ___/
+/ /___/ /_/ / /_/ /  __/ /     ___/ / /_/  __/ /_/ / /_/ /  __/ /    
+\____/\__, /_.___/\___/_/     /____/\__/\___/ .___/ .___/\___/_/     
+     /____/                                 /_/   /_/                 
+"""
+
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -384,7 +393,7 @@ def collect_evidence(evidence_dir):
 def load_ascii_arts(ascii_dir):
     arts = {}
     if not ascii_dir or not os.path.isdir(ascii_dir):
-        return arts
+        return {"cyberstepper": DEFAULT_CYBERSTEPPER_ART.strip("\n")}
     for path in sorted(glob.glob(os.path.join(ascii_dir, "*.txt"))):
         if os.path.isdir(path):
             continue
@@ -398,6 +407,8 @@ def load_ascii_arts(ascii_dir):
             continue
         if art.strip():
             arts[key] = art
+    if not arts:
+        return {"cyberstepper": DEFAULT_CYBERSTEPPER_ART.strip("\n")}
     return arts
 
 
@@ -754,7 +765,6 @@ def generate_html(xml_file, xsl_file, output_html):
 def main():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     xsl_file = os.path.join(script_dir, "cosmic_clean.xsl")
-    ascii_dir = os.path.join(script_dir, "ascii_arts")
 
     if not os.path.isfile(xsl_file):
         print(f"[-] XSL stylesheet not found: {xsl_file}")
@@ -798,16 +808,38 @@ def main():
     else:
         print("\n[*] No Nmap XMLs found — building evidence-only report")
 
-    if os.path.isdir(ascii_dir):
-        ascii_files = sorted(glob.glob(os.path.join(ascii_dir, "*.txt")))
-        if ascii_files:
-            print(f"\n[+] Found {len(ascii_files)} ASCII art file(s):")
-            for f in ascii_files:
-                print(f"    - {os.path.basename(f)}")
+    ascii_candidates = [
+        os.path.join(evidence_dir, "ascii_arts"),
+        os.path.join(evidence_dir, "ascii"),
+        os.path.join(script_dir, "ascii_arts"),
+    ]
+    ascii_candidates = [os.path.abspath(p) for p in ascii_candidates]
+    ascii_candidates_with_files = []
+    for d in ascii_candidates:
+        if os.path.isdir(d) and glob.glob(os.path.join(d, "*.txt")):
+            ascii_candidates_with_files.append(d)
+
+    ascii_dir = None
+    if ascii_candidates_with_files:
+        if len(ascii_candidates_with_files) == 1:
+            ascii_dir = ascii_candidates_with_files[0]
         else:
-            print(f"\n[*] ASCII art directory exists but is empty: {ascii_dir}")
+            print("\n[?] Multiple ASCII art directories found:")
+            for i, d in enumerate(ascii_candidates_with_files, start=1):
+                print(f"    {i}) {d}")
+            selected = input("[?] Pick one (number, default: 1): ").strip()
+            try:
+                idx = int(selected) - 1 if selected else 0
+                ascii_dir = ascii_candidates_with_files[idx]
+            except Exception:
+                ascii_dir = ascii_candidates_with_files[0]
+
+        ascii_files = sorted(glob.glob(os.path.join(ascii_dir, "*.txt")))
+        print(f"\n[+] Found {len(ascii_files)} ASCII art file(s) in {ascii_dir}:")
+        for f in ascii_files:
+            print(f"    - {os.path.basename(f)}")
     else:
-        print(f"\n[*] No ASCII art directory at: {ascii_dir}")
+        print("\n[*] No ASCII art directory found. Using built-in cyberstepper art.")
 
     print("\n" + "=" * 60)
     print("Starting pipeline…")
@@ -815,7 +847,7 @@ def main():
 
     if merge_nmap_xml(xml_files, xml_file, xsl_file,
                       nuclei_json, evidence_dir=evidence_dir,
-                      ascii_dir=ascii_dir if os.path.isdir(ascii_dir) else None):
+                      ascii_dir=ascii_dir):
         generate_html(xml_file, xsl_file, output_html)
         print("\n" + "=" * 60)
         print(f"[✓] Done! Report: {os.path.abspath(output_html)}")
