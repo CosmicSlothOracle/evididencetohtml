@@ -807,9 +807,9 @@ def inject_analyst_persistence_script(html_path):
       } catch (e) {}
     });
 
-    // Hero notes
+    // Hero notes (same key as cosmic_clean.xsl heroNote())
     try {
-      var heroKey = 'cosmicAnal:v1:heroNote:section-overview';
+      var heroKey = 'cosmicAnal:v1:heroNote';
       var heroNote = localStorage.getItem(heroKey);
       var heroEl = document.querySelector('[data-hero-note-input]');
       if (heroEl && heroNote) {
@@ -859,13 +859,21 @@ def inject_analyst_persistence_script(html_path):
     try:
         with open(html_path, 'r', encoding='utf-8') as f:
             content = f.read()
-        
-        # Replace LAST </body> only — earlier occurrences may be inside JS strings
-        idx = content.rfind('</body>')
-        if idx != -1:
-            content = content[:idx] + persistence_script + '\n' + content[idx:]
+
+        # Only the real document closer: </body> then </html> at EOF (not </body> inside JS strings)
+        doc_close = re.search(
+            r"(?ms)\n(\s*</body>\s*\n\s*</html>\s*)$",
+            content,
+        )
+        if doc_close:
+            insert_at = doc_close.start(1)
+            content = content[:insert_at] + persistence_script + "\n" + content[insert_at:]
         else:
-            content += persistence_script
+            idx = content.rfind("</body>")
+            if idx != -1:
+                content = content[:idx] + persistence_script + "\n" + content[idx:]
+            else:
+                content += persistence_script
             
         with open(html_path, 'w', encoding='utf-8') as f:
             f.write(content)
