@@ -1,98 +1,72 @@
 # evidence2html
 
-Turn pen-test evidence files into a single, self-contained HTML report.
+Collect pen-test tool output in one folder, run a short interactive CLI, get a **single self-contained HTML report** (Nmap merge + evidence + optional ASCII banner). Optional **PDFs**: 16:9 slide-style from the HTML, and **DIN-style A4** matching `pdf_export.py` (same sections: cover, contents, executive summary, findings, services, scans, evidence).
 
-Drop your tool outputs into a folder, run one command, answer a few prompts, get a styled report.
+![Overview: scope, ASCII banner, analyst note, themes](readme_png/2026-03-23_14-52.png)
 
 ## Requirements
 
 - Python 3.8+
-- `xsltproc` — ships with Kali; on Debian/Ubuntu: `sudo apt install xsltproc`
+- `xsltproc` (e.g. `sudo apt install xsltproc` on Debian/Kali)
+- For PDF: Chromium or Chrome on the PATH (`chromium`, `google-chrome`, …)
 
-No pip packages. Everything runs on stdlib.
+No pip dependencies.
 
 ## Quick start
 
 ```bash
 git clone https://github.com/CosmicSlothOracle/evididencetohtml.git
 cd evididencetohtml
-
 python3 evidence2html.py
 ```
 
-The script will prompt you for the evidence directory, then do the rest:
-- Auto-detects Nmap XMLs and Nuclei results
-- Collects and deduplicates evidence files
-- Loads ASCII art (if present in `ascii_arts/` subdir)
-- Merges everything into one XML
-- Transforms to HTML with xsltproc
+You’ll be prompted for the evidence directory and output name. The script finds Nmap XMLs, evidence files, optional `nuclei.json`, merges to `merged_scan.xml`, runs `xsltproc` with `cosmic_clean.xsl`, and can offer **16:9** and **DIN 5008** PDFs via Chromium.
 
-Output: `report.html` + `merged_scan.xml` in your current directory.
+## What the HTML report does
 
-## Workflow
+- **Scope block**: target, scan time, counts, tools list — fields are editable; values are stored in the browser (`localStorage`) for your session.
+- **ASCII art**: optional `ascii_arts/*.txt` next to the repo or under your evidence folder; themes in the sidebar swap palette and pick a matching banner when available.
+- **Port matrix**: per-port status, service, version, **extra info**, **analyst notes**, and scan command rows with editable notes.
 
-1. Organize evidence files in a folder (or multiple folders):
-   ```
-   my_evidence/
-   ├── scan_tcp.xml
-   ├── scan_udp.xml
-   ├── nuclei.json
-   ├── evidence_ffuf_results.json
-   ├── evidence_sqlmap_findings.txt
-   ├── banner_ssh.txt
-   └── …
-   ```
+![Port matrix](readme_png/2026-03-23_14-54_1.png)
 
-2. Add optional personalized ASCII art:
-   ```
-   ascii_arts/
-   ├── alice.txt
-   ├── bob.txt
-   └── cosmic_header.txt
-   ```
+![Port row: analyst note and command context](readme_png/2026-03-23_14-54.png)
 
-3. Run:
-   ```bash
-   python3 evidence2html.py
-   ```
+- **Evidence**: each artifact is expandable; you can edit title, summary, raw text, and **comments**. References `E1`…`En` can be used in notes for jump links.
 
-4. Answer the prompts:
-   - Evidence directory path
-   - Output HTML filename (default: `report.html`)
-   - Whether to include `nuclei.json` if found
+![Evidence list and comment field](readme_png/2026-03-23_14-56.png)
 
-5. Done. Open `report.html`.
+- **Export HTML**: downloads the current page (including your edits in the DOM at click time).
+- **Export DIN 5008 PDF**: opens a **print** window whose layout matches the Python `generate_din5008_pdf` output. Before building, it **pulls in `localStorage`** (evidence edits, port/command notes, scope, hero note, DIN cover fields) so the PDF reflects what you typed in the browser.
 
-## Evidence file naming
+![DIN-style PDF: contents and executive summary](readme_png/2026-03-23_14-58.png)
 
-Files are auto-detected and classified by prefix. The script looks for:
+CLI-generated DIN PDF uses the same structure from `merged_scan.xml`; browser export adds your **live annotations** on top.
 
-| Prefix | Tool |
-|--------|------|
-| `evidence_ffuf_*` | ffuf |
-| `evidence_sqlmap_*` | sqlmap |
-| `evidence_testssl_*` | testssl.sh |
-| `evidence_nuclei_*` | nuclei |
-| `evidence_nxc_*` / `evidence_cme_*` | netexec / crackmapexec |
-| `evidence_msf_*` | metasploit |
-| `evidence_subfinder_*` | subfinder |
-| `evidence_httpx_*` | httpx |
-| `evidence_dns_*` | dig |
-| `evidence_tshark_*` | tshark |
-| `evidence_nikto_*` | nikto |
-| `evidence_burp_*` | burp |
-| `banner_*` | nc/bash |
-| `*.hex` | nc/xxd |
+## Evidence layout (typical)
 
-Any file matching `evidence_*` is included regardless. Unknown prefixes won't get structured parsing, but raw content appears in the report.
+```
+my_run/
+  scan_tcp.xml
+  scan_udp.xml
+  nuclei.json          # optional
+  evidence_ffuf_*.json
+  evidence_*.txt
+  ascii_arts/          # optional; or use repo’s ascii_arts/
+    alice.txt
+```
 
-## How it works
+## Naming hints
 
-1. **Collect** — reads all matching files from the evidence directory, deduplicates by content hash, classifies by tool.
-2. **Parse** — structured findings are extracted from JSON/text outputs (ffuf, SQLi, testssl, netexec, metasploit, subdomains).
-3. **Merge** — if Nmap XMLs exist, merges hosts/ports/scripts into one XML. Otherwise builds a minimal envelope just for evidence.
-4. **Inject** — ASCII art (if present) and structured findings are embedded as XML metadata.
-5. **Transform** — `xsltproc` applies `cosmic_clean.xsl` to produce final HTML with embedded styles and fonts.
+Files are classified by prefix (`evidence_ffuf_*`, `evidence_sqlmap_*`, `banner_*`, …). See the table in earlier docs or `evidence2html.py` (`infer_tool` / collectors) if you need the full list.
+
+## Repo layout
+
+| File | Role |
+|------|------|
+| `evidence2html.py` | Interactive pipeline, merge, optional PDFs |
+| `cosmic_clean.xsl` | HTML + in-browser export logic |
+| `pdf_export.py` | Chromium PDF helpers (16:9 + DIN from XML) |
 
 ## License
 

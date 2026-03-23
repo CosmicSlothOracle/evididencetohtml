@@ -21,6 +21,12 @@ import sys
 import xml.etree.ElementTree as ET
 from urllib.parse import urlparse
 
+try:
+    from pdf_export import generate_16x9_pdf, generate_din5008_pdf
+    _PDF_AVAILABLE = True
+except ImportError:
+    _PDF_AVAILABLE = False
+
 DEFAULT_CYBERSTEPPER_ART = r"""
    ______      __                _____ __                             
   / ____/_  __/ /_  ___  _____  / ___// /____  ____  ____  ___  _____
@@ -758,6 +764,118 @@ def generate_html(xml_file, xsl_file, output_html):
         sys.exit(1)
 
 
+def inject_analyst_persistence_script(html_path):
+    """Inject script to persist analyst comments into HTML for export."""
+    persistence_script = '''
+<script id="analyst-persistence">
+// Persist analyst data into HTML elements for export
+(function() {
+  function persistAnalystData() {
+    // Evidence comments
+    document.querySelectorAll('[data-evidence-key]').forEach(function (node) {
+      var key = node.getAttribute('data-evidence-key');
+      if (!key) return;
+      try {
+        var stored = localStorage.getItem('cosmicAnal:v1:evidence:' + key);
+        if (stored) {
+          var data = JSON.parse(stored);
+          // Update title
+          var titleEl = node.querySelector('[data-evidence-title-input="' + key + '"]');
+          if (titleEl && data.title) {
+            titleEl.textContent = data.title;
+            titleEl.setAttribute('data-persisted-title', data.title);
+          }
+          // Update summary  
+          var sumEl = node.querySelector('[data-evidence-summary-input="' + key + '"]');
+          if (sumEl && data.summary) {
+            sumEl.textContent = data.summary;
+            sumEl.setAttribute('data-persisted-summary', data.summary);
+          }
+          // Update raw
+          var rawEl = node.querySelector('[data-evidence-raw-input="' + key + '"]');
+          if (rawEl && data.raw) {
+            rawEl.textContent = data.raw;
+            rawEl.setAttribute('data-persisted-raw', data.raw);
+          }
+          // Update comment
+          var commentEl = node.querySelector('[data-evidence-comment-input="' + key + '"]');
+          if (commentEl && data.comment) {
+            commentEl.textContent = data.comment;
+            commentEl.setAttribute('data-persisted-comment', data.comment);
+          }
+        }
+      } catch (e) {}
+    });
+
+    // Hero notes
+    try {
+      var heroKey = 'cosmicAnal:v1:heroNote:section-overview';
+      var heroNote = localStorage.getItem(heroKey);
+      var heroEl = document.querySelector('[data-hero-note-input]');
+      if (heroEl && heroNote) {
+        heroEl.textContent = heroNote;
+        heroEl.setAttribute('data-persisted-hero', heroNote);
+      }
+    } catch (e) {}
+
+    // Port analyst notes (stored under cosmicAnal:v1:<portKey> as JSON with .note)
+    document.querySelectorAll('[data-analysis-input]').forEach(function (portEl) {
+      var portKey = portEl.getAttribute('data-analysis-input');
+      if (!portKey) return;
+      try {
+        var raw = localStorage.getItem('cosmicAnal:v1:' + portKey);
+        if (!raw) return;
+        var rec = JSON.parse(raw);
+        if (rec && rec.note) {
+          portEl.innerHTML = rec.note;
+          portEl.setAttribute('data-persisted-port', rec.note);
+        }
+      } catch (e) {}
+    });
+
+    // Scoped editing elements
+    document.querySelectorAll('[data-scope-key]').forEach(function (el) {
+      var scopeKey = el.getAttribute('data-scope-key');
+      if (!scopeKey) return;
+      try {
+        var scopeVal = localStorage.getItem('cosmicAnal:v1:scope:' + scopeKey);
+        if (scopeVal) {
+          el.textContent = scopeVal;
+          el.setAttribute('data-persisted-scope', scopeVal);
+        }
+      } catch (e) {}
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', persistAnalystData);
+  } else {
+    persistAnalystData();
+  }
+})();
+</script>
+'''
+    
+    try:
+        with open(html_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Replace LAST </body> only — earlier occurrences may be inside JS strings
+        idx = content.rfind('</body>')
+        if idx != -1:
+            content = content[:idx] + persistence_script + '\n' + content[idx:]
+        else:
+            content += persistence_script
+            
+        with open(html_path, 'w', encoding='utf-8') as f:
+            f.write(content)
+        print("[*] Analyst persistence script injected")
+        return True
+    except Exception as exc:
+        print(f"[-] Failed to inject persistence script: {exc}")
+        return False
+
+
 # ---------------------------------------------------------------------------
 # Interactive CLI
 # ---------------------------------------------------------------------------
@@ -849,6 +967,26 @@ def main():
                       nuclei_json, evidence_dir=evidence_dir,
                       ascii_dir=ascii_dir):
         generate_html(xml_file, xsl_file, output_html)
+        
+        # Inject analyst persistence for HTML export
+        inject_analyst_persistence_script(output_html)
+
+        # ----- PDF exports -----
+        if _PDF_AVAILABLE:
+            stem = os.path.splitext(output_html)[0]
+
+            want_16x9 = input("\n[?] Generate 16:9 PDF? (y/n, default: y): ").strip().lower()
+            if want_16x9 != "n":
+                pdf_16x9 = stem + "_16x9.pdf"
+                generate_16x9_pdf(output_html, pdf_16x9)
+
+            want_din = input("[?] Generate DIN 5008 PDF? (y/n, default: y): ").strip().lower()
+            if want_din != "n":
+                pdf_din = stem + "_din5008.pdf"
+                generate_din5008_pdf(xml_file, pdf_din)
+        else:
+            print("[*] pdf_export.py not found — skipping PDF generation")
+
         print("\n" + "=" * 60)
         print(f"[✓] Done! Report: {os.path.abspath(output_html)}")
         print("=" * 60 + "\n")

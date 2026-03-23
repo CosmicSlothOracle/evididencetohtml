@@ -4,3 +4,5 @@ __pycache__/
 merged_scan*.xml
 report*.html
 *.log
+final_validation_report*
+report_test*

@@ -1129,7 +1129,7 @@ service=<xsl:value-of select="$port_result/@service"/> version=<xsl:value-of sel
                 <thead><tr><th>Tool</th><th>Category</th><th>Severity</th><th>Insight</th></tr></thead>
                 <tbody>
                     <xsl:for-each select="/nmaprun/cosmicinsights/finding">
-                        <tr>
+                        <tr data-finding-tool="{@tool}" data-finding-type="{@type}" data-finding-severity="{translate(@severity, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')}" data-finding-host="{@host}" data-finding-port="{@port}" data-finding-url="{@url}" data-finding-target="{@target}" data-finding-detail="{@detail}" data-finding-text="{@finding}" data-finding-cve="{@cve}" data-finding-param="{@param}">
                             <td><xsl:value-of select="@tool"/></td>
                             <td><xsl:value-of select="@type"/></td>
                             <td>
@@ -1212,7 +1212,7 @@ service=<xsl:value-of select="$port_result/@service"/> version=<xsl:value-of sel
             <div id="evidence-list">
             <xsl:for-each select="/nmaprun/cosmicevidence/item">
                 <xsl:variable name="evid_key" select="concat(@file, '|', position())"/>
-                <details class="evidence-block" data-evidence-key="{$evid_key}" data-evidence-index="{position()}" id="evidence-item-{position()}">
+                <details class="evidence-block" data-evidence-key="{$evid_key}" data-evidence-index="{position()}" id="evidence-item-{position()}" data-evidence-tool="{@tool}" data-evidence-timestamp="{@timestamp}">
                     <summary>
                         <span class="evidence-drag-handle" draggable="true" title="Drag to reorder">⋮⋮</span>
                         <button type="button" class="btn-subtle-remove" data-evidence-remove="{$evid_key}" title="Hide this evidence block">×</button>
@@ -1302,6 +1302,27 @@ service=<xsl:value-of select="$port_result/@service"/> version=<xsl:value-of sel
 <div id="ascii-art-store" style="display:none;">
     <xsl:for-each select="/nmaprun/cosmicascii/art">
         <pre data-ascii-art-name="{@name}"><xsl:value-of select="."/></pre>
+    </xsl:for-each>
+</div>
+
+<!-- Baseline for in-browser DIN export (matches evidence2html pdf_export.py layout) -->
+<xsl:variable name="metaSum" select="/nmaprun/cosmicmeta/summary"/>
+<div id="cosmic-din-summary" aria-hidden="true" style="display:none!important;">
+    <xsl:if test="$metaSum">
+        <xsl:for-each select="$metaSum/@*">
+            <xsl:attribute name="{concat('data-', translate(local-name(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'))}">
+                <xsl:value-of select="."/>
+            </xsl:attribute>
+        </xsl:for-each>
+    </xsl:if>
+</div>
+<div id="cosmic-din-scan-store" aria-hidden="true" style="display:none!important;">
+    <xsl:for-each select="/nmaprun/cosmiccommands/scan">
+        <div class="cosmic-din-scan-row"
+             data-scan-file="{@file}"
+             data-scan-args="{@args}"
+             data-scan-flags="{@flags}"
+             data-scan-start="{@startstr}"></div>
     </xsl:for-each>
 </div>
 
@@ -1854,13 +1875,18 @@ service=<xsl:value-of select="$port_result/@service"/> version=<xsl:value-of sel
         var rows = [];
         var index = 1;
         document.querySelectorAll("details[data-evidence-key][data-evidence-index]").forEach(function (node) {
+            var head = node.querySelector(".evidence-item-head");
+            var statusTxt = "OK";
+            if (head) statusTxt = stripWhitespace(textContentSafe(head)).replace(/^.*Status:\s*/i, "").split("|")[0].trim() || "OK";
             rows.push({
                 index: index++,
                 key: node.getAttribute("data-evidence-key") || "",
                 title: node.querySelector("[data-evidence-title-input]") ? stripWhitespace(textContentSafe(node.querySelector("[data-evidence-title-input]"))) : "",
                 file: node.getAttribute("data-evidence-key") ? node.getAttribute("data-evidence-key").split("|")[0] : "",
+                tool: node.getAttribute("data-evidence-tool") || "",
+                timestamp: node.getAttribute("data-evidence-timestamp") || "",
                 category: textContentSafe(node.querySelector("summary .badge.proto-tcp")),
-                status: textContentSafe(node.querySelector("summary + div .evidence-item-head .status, summary")) || "OK",
+                status: statusTxt,
                 summary: node.querySelector("[data-evidence-summary-input]") ? stripWhitespace(textContentSafe(node.querySelector("[data-evidence-summary-input]"))) : "",
                 raw: node.querySelector("[data-evidence-raw-input]") ? stripWhitespace(textContentSafe(node.querySelector("[data-evidence-raw-input]"))) : "",
                 comment: node.querySelector("[data-evidence-comment-input]") ? stripWhitespace(textContentSafe(node.querySelector("[data-evidence-comment-input]"))) : ""
@@ -1868,219 +1894,351 @@ service=<xsl:value-of select="$port_result/@service"/> version=<xsl:value-of sel
         });
         return rows;
     }
-    function buildPdfReportHtml() {
+    /** Merge localStorage edits into the live DOM so PDF/export sees the same text as the analyst. */
+    function flushBrowserCacheIntoDom() {
+        document.querySelectorAll("details[data-evidence-key]").forEach(function (node) {
+            var key = node.getAttribute("data-evidence-key");
+            if (!key) return;
+            try {
+                var stored = localStorage.getItem("cosmicAnal:v1:evidence:" + key);
+                if (!stored) return;
+                var data = JSON.parse(stored);
+                var t = node.querySelector('[data-evidence-title-input="' + key + '"]');
+                if (t && data.title) t.textContent = data.title;
+                var s = node.querySelector('[data-evidence-summary-input="' + key + '"]');
+                if (s && data.summary) s.textContent = data.summary;
+                var r = node.querySelector('[data-evidence-raw-input="' + key + '"]');
+                if (r && data.raw) r.textContent = data.raw;
+                var c = node.querySelector('[data-evidence-comment-input="' + key + '"]');
+                if (c && data.comment) c.textContent = data.comment;
+            } catch (err) {}
+        });
+        document.querySelectorAll("[data-analysis-input]").forEach(function (input) {
+            var rawKey = input.getAttribute("data-analysis-input");
+            if (!rawKey) return;
+            try {
+                var raw = localStorage.getItem("cosmicAnal:v1:" + rawKey);
+                if (!raw) return;
+                var rec = JSON.parse(raw);
+                if (rec && rec.note) input.innerHTML = rec.note;
+            } catch (e2) {}
+        });
+        document.querySelectorAll("[data-port-extra-input]").forEach(function (el) {
+            var k = el.getAttribute("data-port-extra-input");
+            try {
+                var sv = localStorage.getItem("cosmicAnal:v1:portExtra:" + k);
+                if (sv !== null) el.textContent = sv;
+            } catch (e3) {}
+        });
+        document.querySelectorAll("[data-cmd-note]").forEach(function (el) {
+            var k = el.getAttribute("data-cmd-note");
+            try {
+                var sv = localStorage.getItem("cosmicAnal:v1:cmdNote:" + k);
+                if (sv !== null) el.textContent = sv;
+            } catch (e4) {}
+        });
+        document.querySelectorAll("[data-cmd-extra]").forEach(function (el) {
+            var k = el.getAttribute("data-cmd-extra");
+            try {
+                var sv = localStorage.getItem("cosmicAnal:v1:cmdExtra:" + k);
+                if (sv !== null) el.textContent = sv;
+            } catch (e5) {}
+        });
+        document.querySelectorAll(".scope-metric-value[data-scope-key]").forEach(function (node) {
+            var sk = node.getAttribute("data-scope-key");
+            if (!sk) return;
+            try {
+                var sv = localStorage.getItem("cosmicAnal:v1:scope:" + sk);
+                if (sv !== null) node.textContent = sv;
+            } catch (e6) {}
+        });
+        var hero = document.getElementById("hero-note-input");
+        if (hero) {
+            try {
+                var hn = localStorage.getItem("cosmicAnal:v1:heroNote");
+                if (hn) hero.textContent = hn;
+            } catch (e7) {}
+        }
+    }
+    function typeLabel(s) {
+        if (!s) return "";
+        return s.split("_").map(function (w) {
+            if (!w) return "";
+            return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+        }).join(" ");
+    }
+    function readDinMetaSummary() {
+        var m = {};
+        var el = document.getElementById("cosmic-din-summary");
+        if (!el) return m;
+        for (var i = 0; i < el.attributes.length; i++) {
+            var a = el.attributes[i];
+            if (a.name.indexOf("data-") !== 0) continue;
+            var k = a.name.slice(5).replace(/-/g, "_");
+            m[k] = a.value;
+        }
+        return m;
+    }
+    function gatherFindingsFromDom() {
+        var list = [];
+        var tactical = document.getElementById("section-tactical");
+        if (!tactical) return list;
+        tactical.querySelectorAll("tbody tr[data-finding-severity]").forEach(function (tr) {
+            list.push({
+                tool: tr.getAttribute("data-finding-tool") || "",
+                type: tr.getAttribute("data-finding-type") || "",
+                severity: tr.getAttribute("data-finding-severity") || "",
+                host: tr.getAttribute("data-finding-host") || "",
+                port: tr.getAttribute("data-finding-port") || "",
+                url: tr.getAttribute("data-finding-url") || "",
+                target: tr.getAttribute("data-finding-target") || "",
+                detail: tr.getAttribute("data-finding-detail") || "",
+                finding: tr.getAttribute("data-finding-text") || "",
+                cve: tr.getAttribute("data-finding-cve") || "",
+                param: tr.getAttribute("data-finding-param") || ""
+            });
+        });
+        var order = { critical: 0, high: 1, medium: 2, low: 3, info: 4 };
+        list.sort(function (a, b) {
+            var sa = order[(a.severity || "").toLowerCase()];
+            var sb = order[(b.severity || "").toLowerCase()];
+            if (sa === undefined) sa = 5;
+            if (sb === undefined) sb = 5;
+            return sa - sb;
+        });
+        return list;
+    }
+    function gatherScansFromDom() {
+        var out = [];
+        document.querySelectorAll(".cosmic-din-scan-row").forEach(function (el) {
+            out.push({
+                file: el.getAttribute("data-scan-file") || "",
+                args: el.getAttribute("data-scan-args") || "",
+                flags: el.getAttribute("data-scan-flags") || "",
+                startstr: el.getAttribute("data-scan-start") || ""
+            });
+        });
+        return out;
+    }
+    function groupPortsByHost(portRows) {
+        var map = {};
+        portRows.forEach(function (r) {
+            var h = r.host || "Unknown";
+            if (!map[h]) map[h] = { ip: h, os: "", ports: [] };
+            if (r.state === "open" || r.state === "filtered") {
+                map[h].ports.push({
+                    portid: r.port,
+                    protocol: (r.protocol || "").toLowerCase(),
+                    state: r.state,
+                    service: r.service || "",
+                    product: r.product || "",
+                    version: r.version || ""
+                });
+            }
+        });
+        return Object.keys(map).map(function (k) { return map[k]; });
+    }
+    function dinSevBadge(sev) {
+        var colors = { critical: "#c0392b", high: "#e67e22", medium: "#f39c12", low: "#27ae60", info: "#2980b9" };
+        var bg = colors[(sev || "").toLowerCase()] || "#555";
+        var u = (sev || "?").toUpperCase();
+        return "<span style=\"background:" + bg + ";color:#fff;padding:2px 8px;border-radius:3px;font-size:10pt;font-weight:bold;letter-spacing:1px;\">" + htmlEscape(u) + "</span>";
+    }
+    function buildDin5008PythonAlignedHtml() {
         var scope = gatherScopeMetrics();
+        var meta = readDinMetaSummary();
         var portData = gatherPortRows();
         var evidence = gatherEvidenceRows();
-        var rows = [];
-        var now = new Date();
-        var dateDe = now.toLocaleDateString("de-DE");
-        var dateTimeDe = now.toLocaleString("de-DE");
-        var targetName = scope.target || "Nicht angegeben";
-        var scanTime = scope.scan_time || "Nicht angegeben";
-        var toolsUsed = scope.tools_used || "Nmap und evidenzbasierte Analyse";
-        var discovery = scope.discovery_time || "Nicht angegeben";
-        var reportCreated = scope.report_created || dateTimeDe;
+        var findings = gatherFindingsFromDom();
+        var scans = gatherScansFromDom();
+        var hosts = groupPortsByHost(portData.rows);
+        var generated = new Date().toISOString().slice(0, 16).replace("T", " ");
+        var reportDate = meta.report_generated || scope.report_created || generated;
+        var targetLine = scope.target || "";
+        if (!targetLine && hosts.length) targetLine = hosts.map(function (h) { return h.ip; }).join(", ");
 
-        function levelFromSeverity(sev) {
-            var s = (sev || "").toLowerCase();
-            if (s === "high") return "hoch";
-            if (s === "medium") return "mittel";
-            if (s === "low") return "niedrig";
-            return "informativ";
+        var DIN_CSS = [
+            "@page { size: A4 portrait; margin: 25mm 20mm 20mm 25mm;",
+            "  @top-right { content: \"Confidential\"; font-size: 8pt; color: #888; }",
+            "  @bottom-right { content: \"Page \" counter(page) \" of \" counter(pages); font-size: 8pt; color: #888; }",
+            "}",
+            "* { box-sizing: border-box; }",
+            "body { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 10pt; color: #1a1a1a; line-height: 1.5; margin: 0; padding: 0; }",
+            "h1 { font-size: 18pt; font-weight: bold; margin: 0 0 8pt; }",
+            "h2 { font-size: 13pt; font-weight: bold; margin: 20pt 0 6pt; border-bottom: 1.5pt solid #1a1a1a; padding-bottom: 3pt; }",
+            "h3 { font-size: 11pt; font-weight: bold; margin: 14pt 0 4pt; }",
+            "h4 { font-size: 10pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5pt; color: #444; margin: 10pt 0 3pt; }",
+            "p { margin: 4pt 0; }",
+            "table { width: 100%; border-collapse: collapse; margin: 8pt 0; font-size: 9pt; }",
+            "th { background: #1a1a1a; color: #fff; padding: 5pt 8pt; text-align: left; }",
+            "td { padding: 4pt 8pt; border-bottom: 0.5pt solid #ccc; vertical-align: top; }",
+            "tr:nth-child(even) td { background: #f8f8f8; }",
+            "pre { background: #f4f4f4; border-left: 3pt solid #ccc; padding: 8pt; font-size: 7.5pt; font-family: 'Courier New', monospace; white-space: pre-wrap; word-break: break-all; margin: 6pt 0; page-break-inside: auto; }",
+            ".cover { page-break-after: always; }",
+            ".toc { page-break-after: always; }",
+            ".finding-block { page-break-inside: avoid; margin-bottom: 20pt; }",
+            ".finding-heading { font-size: 12pt; font-weight: bold; margin: 0 0 8pt; }",
+            ".field-label { font-weight: bold; text-transform: uppercase; font-size: 8.5pt; letter-spacing: 0.5pt; color: #444; margin: 10pt 0 2pt; }",
+            ".field-value { margin: 0 0 6pt; }",
+            "hr { border: none; border-top: 0.5pt solid #ccc; margin: 12pt 0; }",
+            ".stat-table td { font-size: 10pt; }",
+            ".stat-table .sev-num { font-weight: bold; font-size: 12pt; }"
+        ].join("\n");
+
+        var parts = [];
+        parts.push("<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>Security Assessment Report</title><style>");
+        parts.push(DIN_CSS);
+        parts.push("</style></head><body>");
+
+        parts.push("<div class=\"cover\"><br><br><br><h1>Security Assessment Report</h1><hr><table class=\"stat-table\" style=\"width:auto;min-width:320pt;\">");
+        if (targetLine) parts.push("<tr><td><strong>Target</strong></td><td>" + htmlEscape(targetLine) + "</td></tr>");
+        parts.push("<tr><td><strong>Report date</strong></td><td>" + htmlEscape(reportDate) + "</td></tr>");
+        parts.push("<tr><td><strong>Version</strong></td><td>1.0</td></tr>");
+        if (scope.din_organisation) parts.push("<tr><td><strong>Organisation</strong></td><td>" + htmlEscape(scope.din_organisation) + "</td></tr>");
+        if (scope.din_auftraggeber) parts.push("<tr><td><strong>Client</strong></td><td>" + htmlEscape(scope.din_auftraggeber) + "</td></tr>");
+        if (scope.din_pruefer) parts.push("<tr><td><strong>Tester</strong></td><td>" + htmlEscape(scope.din_pruefer) + "</td></tr>");
+        if (scope.din_vertraulichkeit) parts.push("<tr><td><strong>Confidentiality</strong></td><td>" + htmlEscape(scope.din_vertraulichkeit) + "</td></tr>");
+        parts.push("</table>");
+        if (scope.hero_note) {
+            parts.push("<h4>Analyst note</h4><p>" + htmlEscape(scope.hero_note) + "</p>");
         }
+        parts.push("</div>");
 
-        rows.push("<!DOCTYPE html>");
-        rows.push("<html><head><meta charset='UTF-8'><title>Surface Tension – Cybersecurity Assessment Report</title>");
-        rows.push("<style>");
-        rows.push("@page{size:A4 portrait;margin:2.5cm 2cm 2.5cm 2.5cm;}");
-        rows.push("html,body{margin:0;padding:0;background:#fff;color:#111;}");
-        rows.push("body{font-family:Arial,'Times New Roman',serif;font-size:11pt;line-height:1.35;hyphens:auto;text-align:justify;}");
-        rows.push(".container{max-width:17cm;margin:0 auto;}");
-        rows.push(".cover{min-height:24cm;display:flex;flex-direction:column;justify-content:center;page-break-after:always;}");
-        rows.push("h1,h2,h3{margin:0 0 8px 0;text-align:left;}");
-        rows.push("h1{font-size:14pt;font-weight:700;}");
-        rows.push("h2{font-size:14pt;font-weight:700;margin-top:16pt;}");
-        rows.push("h3{font-size:12pt;font-weight:700;margin-top:10pt;}");
-        rows.push("p{margin:0 0 8pt 0;}");
-        rows.push(".meta{margin-top:16pt;border-top:1px solid #222;padding-top:10pt;}");
-        rows.push(".meta-row{display:flex;gap:8pt;margin-bottom:4pt;}");
-        rows.push(".meta-label{min-width:5.5cm;font-weight:700;}");
-        rows.push(".chapter{page-break-before:always;}");
-        rows.push(".toc-list{margin:0;padding-left:18pt;}");
-        rows.push(".toc-list li{margin-bottom:3pt;}");
-        rows.push("table{width:100%;border-collapse:collapse;margin:8pt 0;font-size:10.5pt;}");
-        rows.push("th,td{border:1px solid #333;padding:5pt 6pt;vertical-align:top;text-align:left;}");
-        rows.push("th{font-weight:700;background:#f2f2f2;}");
-        rows.push(".table-caption{font-size:10pt;font-weight:700;text-align:left;margin-top:10pt;}");
-        rows.push(".figure-caption{font-size:10pt;font-style:italic;text-align:left;margin-top:4pt;}");
-        rows.push(".footnote{font-size:9pt;}");
-        rows.push(".footer-note{font-size:9pt;color:#222;margin-top:14pt;border-top:1px solid #666;padding-top:6pt;}");
-        rows.push(".page-footer{position:fixed;left:0;right:0;bottom:0;text-align:center;font-size:9pt;color:#444;}");
-        rows.push(".page-footer:after{content:'Seite ' counter(page);}");
-        rows.push("@media print{.no-print{display:none;}}");
-        rows.push("</style></head><body><div class='container'>");
-
-        var dinOrg = scope.din_organisation || "Nicht angegeben";
-        var dinClient = scope.din_auftraggeber || "Nicht angegeben";
-        var dinTester = scope.din_pruefer || "Cosmic Analyst Pipeline";
-        var dinConf = scope.din_vertraulichkeit || "Vertraulich / Intern";
-        var heroNote = scope.hero_note || "";
-
-        // I. Deckblatt
-        rows.push("<section class='cover'>");
-        rows.push("<h1>Cybersecurity Assessment Report</h1>");
-        rows.push("<p><strong>Ziel:</strong> " + htmlEscape(targetName) + "</p>");
-        rows.push("<p><strong>Art des Dokuments:</strong> Technischer Prüfbericht / Penetrationstest-Dokumentation</p>");
-        rows.push("<div class='meta'>");
-        rows.push("<div class='meta-row'><span class='meta-label'>Hochschule / Unternehmen:</span><span>" + htmlEscape(dinOrg) + "</span></div>");
-        rows.push("<div class='meta-row'><span class='meta-label'>Auftraggeber / Labor:</span><span>" + htmlEscape(dinClient) + "</span></div>");
-        rows.push("<div class='meta-row'><span class='meta-label'>Prüfer (Rolle):</span><span>" + htmlEscape(dinTester) + "</span></div>");
-        rows.push("<div class='meta-row'><span class='meta-label'>Datum der Erstellung:</span><span>" + htmlEscape(dateDe) + "</span></div>");
-        rows.push("<div class='meta-row'><span class='meta-label'>Versionsnummer:</span><span>1.0</span></div>");
-        rows.push("<div class='meta-row'><span class='meta-label'>Vertraulichkeitsstufe:</span><span>" + htmlEscape(dinConf) + "</span></div>");
-        rows.push("</div>");
-        if (heroNote) {
-            rows.push("<div class='meta' style='margin-top:12pt;'>");
-            rows.push("<h3 style='margin-bottom:4pt;'>Analysten-Zusammenfassung</h3>");
-            rows.push("<p>" + htmlEscape(heroNote) + "</p>");
-            rows.push("</div>");
-        }
-        rows.push("</section>");
-
-        // II. Sperrvermerk
-        rows.push("<section class='chapter'>");
-        rows.push("<h2>II. Sperrvermerk</h2>");
-        rows.push("<p>Dieser Bericht ist ausschließlich für den internen Gebrauch bestimmt. Weitergabe an Dritte nur mit schriftlicher Genehmigung.</p>");
-        rows.push("</section>");
-
-        // III. Inhaltsverzeichnis
-        rows.push("<section class='chapter'>");
-        rows.push("<h2>III. Inhaltsverzeichnis</h2>");
-        rows.push("<ul class='toc-list'>");
-        rows.push("<li>Abbildungsverzeichnis</li>");
-        rows.push("<li>Tabellenverzeichnis</li>");
-        rows.push("<li>Abkürzungsverzeichnis</li>");
-        rows.push("<li>1. Einleitung</li>");
-        rows.push("<li>2. Methodik</li>");
-        rows.push("<li>3. Durchführung</li>");
-        rows.push("<li>4. Ergebnisse</li>");
-        rows.push("<li>5. Diskussion</li>");
-        rows.push("<li>6. Handlungsempfehlungen</li>");
-        rows.push("<li>7. Fazit</li>");
-        rows.push("<li>V. Anhang</li>");
-        rows.push("<li>VI. Literaturverzeichnis</li>");
-        rows.push("<li>VII. Ehrenwörtliche Erklärung (optional)</li>");
-        rows.push("</ul>");
-        rows.push("<h3>Abkürzungsverzeichnis</h3>");
-        rows.push("<p>DNS = Domain Name System, SMB = Server Message Block, CVE = Common Vulnerabilities and Exposures, ISO = International Organization for Standardization.</p>");
-        rows.push("</section>");
-
-        // IV. Hauptteil
-        rows.push("<section class='chapter'>");
-        rows.push("<h2>IV. Hauptteil</h2>");
-
-        rows.push("<h3>1. Einleitung</h3>");
-        rows.push("<p>Zielsetzung dieses Berichts ist die strukturierte Dokumentation eines technischen Sicherheitsassessments des Zielsystems <strong>" + htmlEscape(targetName) + "</strong>. Der Scope umfasst die im Prüfzeitraum erhobenen Netzwerk- und Servicebefunde sowie zugehörige Evidenz.</p>");
-        rows.push("<p>Rahmenbedingungen: Analysezeitpunkt " + htmlEscape(scanTime) + ", Berichtserstellung " + htmlEscape(reportCreated) + ".</p>");
-
-        rows.push("<h3>2. Methodik</h3>");
-        rows.push("<p>Die Methodik kombiniert passive und aktive technische Prüfungen mit evidenzbasierter Auswertung. Als Referenzrahmen werden etablierte Sicherheitspraktiken und ISO/IEC-27001-nahe Kontrollziele berücksichtigt (vgl. ISO/IEC 27001:2022, Kap. 6–8).</p>");
-        rows.push("<p>Eingesetzte Werkzeuge: " + htmlEscape(toolsUsed) + "; erfasste Discovery-Zeit: " + htmlEscape(discovery) + ".</p>");
-
-        rows.push("<h3>3. Durchführung</h3>");
-        rows.push("<p>Die Durchführung erfolgte phasenweise: Zieldefinition, Discovery/Enumeration, vertiefte Prüfung, Evidenzkonsolidierung und Berichterstellung. Alle Rohartefakte wurden mit Zeitstempel abgelegt und in die aggregierte Auswertung übernommen.</p>");
-
-        rows.push("<h3>4. Ergebnisse</h3>");
-        rows.push("<div class='table-caption'>Tabelle 1: Schwachstellen- und Serviceübersicht</div>");
-        rows.push("<table><thead><tr><th>Host</th><th>Protokoll</th><th>Port</th><th>Dienst</th><th>Status</th><th>Risikostufe</th><th>Hinweise</th></tr></thead><tbody>");
-        portData.rows.forEach(function (r) {
-            var service = r.service + (r.version ? " " + r.version : "") + (r.product ? " / " + r.product : "");
-            rows.push("<tr>");
-            rows.push("<td>" + htmlEscape(r.host) + "</td>");
-            rows.push("<td>" + htmlEscape(r.protocol) + "</td>");
-            rows.push("<td>" + htmlEscape(r.port) + "</td>");
-            rows.push("<td>" + htmlEscape(service) + "</td>");
-            rows.push("<td>" + htmlEscape((r.state || "").toUpperCase()) + "</td>");
-            rows.push("<td>" + htmlEscape(levelFromSeverity(r.severity)) + "</td>");
-            var hinweise = [];
-            if (r.analystNote) hinweise.push("[Analyst] " + r.analystNote);
-            if (r.extra) hinweise.push(r.extra);
-            if (r.notes.length) hinweise.push(r.notes.join(" | "));
-            rows.push("<td>" + htmlEscape(truncate(hinweise.length ? hinweise.join(" — ") : "Keine Zusatzhinweise", 400)) + "</td>");
-            rows.push("</tr>");
+        var toc = [];
+        var threatKeys = ["critical", "high", "medium", "low", "info"];
+        var tcount = 0;
+        threatKeys.forEach(function (k) {
+            var v = parseInt(meta["threat_" + k] || "0", 10);
+            if (!isNaN(v)) tcount += v;
         });
-        if (!portData.rows.length) {
-            rows.push("<tr><td colspan='7'>Keine Port-/Service-Daten verfügbar.</td></tr>");
-        }
-        rows.push("</tbody></table>");
-
-        rows.push("<h3>5. Diskussion</h3>");
-        rows.push("<p>Die Befunde zeigen ein für technische Assessments typisches Expositionsprofil. Die Kritikalität ergibt sich aus der Kombination von Erreichbarkeit, Angriffsfläche und möglicher Ausnutzbarkeit. Eine vollständige Compliance-Bewertung erfordert die Zuordnung zu organisatorischen Controls und akzeptierten Restrisiken.</p>");
-
-        rows.push("<h3>6. Handlungsempfehlungen</h3>");
-        rows.push("<ol>");
-        rows.push("<li>Offene, nicht benötigte Dienste kurzfristig deaktivieren und netzseitig segmentieren.</li>");
-        rows.push("<li>Authentisierung, TLS-Konfiguration und Service-Härtung priorisiert nach Risiko umsetzen.</li>");
-        rows.push("<li>Wiederholungsprüfung nach Maßnahmenumsetzung mit identischer Methodik durchführen.</li>");
-        rows.push("</ol>");
-
-        rows.push("<h3>7. Fazit</h3>");
-        rows.push("<p>Die Analyse liefert eine belastbare technische Grundlage für priorisierte Sicherheitsmaßnahmen. Für belastbare Governance-Entscheidungen sollte dieser Bericht mit Risikoakzeptanz, Maßnahmenstatus und Compliance-Nachweisen zusammengeführt werden.</p>");
-        rows.push("</section>");
-
-        // V. Anhang
-        rows.push("<section class='chapter'>");
-        rows.push("<h2>V. Anhang</h2>");
-        rows.push("<h3>Anhang A: Rohdaten</h3>");
-        if (evidence.length) {
-            rows.push("<div class='table-caption'>Tabelle 2: Evidenzübersicht</div>");
-            rows.push("<table><thead><tr><th>ID</th><th>Datei</th><th>Kategorie</th><th>Status</th><th>Zusammenfassung</th><th>Kommentar</th></tr></thead><tbody>");
-            evidence.forEach(function (e) {
-                rows.push("<tr>");
-                rows.push("<td>E" + e.index + "</td>");
-                rows.push("<td>" + htmlEscape(e.file || "artifact") + "</td>");
-                rows.push("<td>" + htmlEscape(e.category || "evidence") + "</td>");
-                rows.push("<td>" + htmlEscape(e.status || "Captured") + "</td>");
-                rows.push("<td>" + htmlEscape(truncate(e.summary || e.title || "Keine Zusammenfassung", 220)) + "</td>");
-                rows.push("<td>" + htmlEscape(truncate(e.comment || "", 200)) + "</td>");
-                rows.push("</tr>");
+        if (findings.length) {
+            toc.push("Executive Summary");
+            findings.forEach(function (f) {
+                toc.push("[" + (f.severity || "?").toUpperCase() + "] " + (f.type || "finding").replace(/_/g, " "));
             });
-            rows.push("</tbody></table>");
-        } else {
-            rows.push("<p>Keine gesonderten Evidenzdateien vorhanden.</p>");
         }
-        rows.push("<h3>Anhang B: Tool-Liste mit Versionen</h3>");
-        rows.push("<p>" + htmlEscape(toolsUsed) + "</p>");
-        rows.push("<h3>Anhang C: Glossar</h3>");
-        rows.push("<p>Risikostufe hoch/mittel/niedrig basiert auf beobachteter Exposition und potenzieller Auswirkung.</p>");
-        rows.push("<h3>Anhang D: Statement of Applicability (ISO 27001)</h3>");
-        rows.push("<p>Die Zuordnung zu konkreten Kontrollen erfolgt projektspezifisch durch das verantwortliche ISMS-Team.</p>");
-        rows.push("</section>");
+        if (hosts.some(function (h) { return h.ports.length; })) toc.push("Network Services");
+        if (scans.length) toc.push("Scan Commands");
+        if (evidence.length) toc.push("Evidence Appendix");
+        var cmdNotes = [];
+        document.querySelectorAll("[data-cmd-note]").forEach(function (el) {
+            var tx = stripWhitespace(textContentSafe(el));
+            if (tx) cmdNotes.push({ key: el.getAttribute("data-cmd-note"), text: tx });
+        });
+        if (cmdNotes.length) toc.push("Scan command notes");
 
-        // VI. Literaturverzeichnis
-        rows.push("<section class='chapter'>");
-        rows.push("<h2>VI. Literaturverzeichnis</h2>");
-        rows.push("<p>Darstellung nach ISO 690 (Harvard-Deutsch).</p>");
-        rows.push("<ul>");
-        rows.push("<li>Lyon, G. (2024): Nmap Network Scanning. URL: https://nmap.org (abgerufen am " + htmlEscape(dateDe) + ").</li>");
-        rows.push("<li>ISO/IEC 27001:2022 (2022): Informationstechnik – Sicherheitsverfahren – Informationssicherheitsmanagementsysteme – Anforderungen. Berlin: Beuth Verlag.</li>");
-        rows.push("<li>Bundesamt für Sicherheit in der Informationstechnik (2023): BSI-Standard 200-1 – Managementsysteme für Informationssicherheit. Bonn: BSI.</li>");
-        rows.push("</ul>");
-        rows.push("</section>");
+        if (toc.length) {
+            parts.push("<div class=\"toc\"><h2>Contents</h2><ol>");
+            toc.forEach(function (x) { parts.push("<li>" + htmlEscape(x) + "</li>"); });
+            parts.push("</ol></div>");
+        }
 
-        // VII. Ehrenwörtliche Erklärung
-        rows.push("<section class='chapter'>");
-        rows.push("<h2>VII. Ehrenwörtliche Erklärung (optional)</h2>");
-        rows.push("<p>Ich versichere, dass der Bericht eigenständig verfasst und keine unerlaubten Hilfsmittel verwendet wurden.</p>");
-        rows.push("</section>");
+        if (tcount > 0 || findings.length) {
+            parts.push("<h2>Executive Summary</h2><table class=\"stat-table\" style=\"width:auto;min-width:200pt;\"><tr><th>Severity</th><th>Count</th></tr>");
+            threatKeys.forEach(function (k) {
+                var n = parseInt(meta["threat_" + k] || "0", 10) || 0;
+                parts.push("<tr><td>" + dinSevBadge(k) + "</td><td class=\"sev-num\">" + n + "</td></tr>");
+            });
+            parts.push("</table>");
+            var statParts = [];
+            if (meta.hosts) statParts.push("hosts: " + meta.hosts);
+            if (meta.ports) statParts.push("open ports: " + meta.ports);
+            if (meta.evidence_files) statParts.push("evidence files: " + meta.evidence_files);
+            if (statParts.length) parts.push("<p style=\"margin-top:8pt;\">Scan statistics — " + htmlEscape(statParts.join(", ")) + ".</p>");
+        }
 
-        rows.push("<div class='footer-note footnote'>Fußnote 1: Dieses exportierte PDF wird über die Druckfunktion des Browsers erzeugt. Layout-Details können je nach Browser-Engine geringfügig variieren.</div>");
-        rows.push("<div class='page-footer'></div>");
-        rows.push("</div></body></html>");
-        return rows.join("");
+        if (findings.length) {
+            parts.push("<h2>Findings</h2>");
+            findings.forEach(function (f) {
+                var titleParts = [];
+                if (f.type) titleParts.push(typeLabel(f.type));
+                if (f.tool && f.tool !== "unknown") titleParts.push("(" + f.tool + ")");
+                var title = titleParts.length ? titleParts.join(" ") : "Finding";
+                parts.push("<div class=\"finding-block\"><hr><div class=\"finding-heading\">" + dinSevBadge(f.severity) + " " + htmlEscape(title) + "</div>");
+                var sum = f.finding || f.detail;
+                if (sum) { parts.push("<div class=\"field-label\">Summary</div><div class=\"field-value\"><p>" + htmlEscape(sum) + "</p></div>"); }
+                if (f.param) { parts.push("<div class=\"field-label\">Parameter</div><div class=\"field-value\"><p>" + htmlEscape(f.param) + "</p></div>"); }
+                if (f.cve) { parts.push("<div class=\"field-label\">CVE</div><div class=\"field-value\"><p>" + htmlEscape(f.cve) + "</p></div>"); }
+                var loc = [f.host, f.port, f.url, f.target].filter(Boolean).join("  ·  ");
+                if (loc) { parts.push("<div class=\"field-label\">Location</div><div class=\"field-value\"><p>" + htmlEscape(loc) + "</p></div>"); }
+                parts.push("</div>");
+            });
+        }
+
+        var hasPorts = hosts.some(function (h) { return h.ports.length; });
+        if (hasPorts) {
+            parts.push("<h2>Network Services</h2>");
+            hosts.forEach(function (h) {
+                if (!h.ports.length) return;
+                parts.push("<h3>" + htmlEscape(h.ip) + "</h3>");
+                parts.push("<table><tr><th>Port / Proto</th><th>State</th><th>Service</th><th>Version</th></tr>");
+                h.ports.forEach(function (p) {
+                    var ver = [p.product, p.version].filter(Boolean).join(" ");
+                    parts.push("<tr><td>" + htmlEscape(p.portid + "/" + p.protocol) + "</td><td>" + htmlEscape(p.state) + "</td><td>" + htmlEscape(p.service) + "</td><td>" + htmlEscape(ver) + "</td></tr>");
+                });
+                parts.push("</table>");
+            });
+        }
+
+        portData.rows.forEach(function (r) {
+            var noteBits = [];
+            if (r.analystNote) noteBits.push("Analyst: " + r.analystNote);
+            if (r.extra) noteBits.push("Extra: " + r.extra);
+            if (noteBits.length) {
+                parts.push("<h4>Port notes — " + htmlEscape(r.host + " " + r.protocol + "/" + r.port) + "</h4><p>" + htmlEscape(noteBits.join(" — ")) + "</p>");
+            }
+        });
+
+        if (scans.length) {
+            parts.push("<h2>Scan Commands</h2><table><tr><th>File</th><th>Started</th><th>Flags</th></tr>");
+            scans.forEach(function (c) {
+                var fl = c.flags || (c.args ? c.args.substring(0, 80) : "");
+                parts.push("<tr><td>" + htmlEscape(c.file) + "</td><td>" + htmlEscape(c.startstr) + "</td><td><code>" + htmlEscape(fl) + "</code></td></tr>");
+            });
+            parts.push("</table>");
+        }
+        if (cmdNotes.length) {
+            parts.push("<h3>Scan command notes</h3><ul>");
+            cmdNotes.forEach(function (cn) {
+                parts.push("<li><code>" + htmlEscape(cn.key) + "</code> — " + htmlEscape(cn.text) + "</li>");
+            });
+            parts.push("</ul>");
+        }
+
+        if (evidence.length) {
+            parts.push("<h2>Evidence Appendix</h2>");
+            var byCat = {};
+            evidence.forEach(function (item) {
+                var cat = item.category || "other";
+                if (!byCat[cat]) byCat[cat] = [];
+                byCat[cat].push(item);
+            });
+            Object.keys(byCat).sort().forEach(function (cat) {
+                parts.push("<h3>" + htmlEscape(cat.replace(/-/g, " ")) + "</h3>");
+                byCat[cat].forEach(function (item) {
+                    var metaLine = "tool: " + (item.tool || "?") + " · status: " + (item.status || "OK");
+                    if (item.timestamp) metaLine += " · " + item.timestamp;
+                    parts.push("<p><strong>" + htmlEscape(item.file) + "</strong> — " + htmlEscape(metaLine) + "</p>");
+                    if (item.summary) parts.push("<p><em>Summary:</em> " + htmlEscape(truncate(item.summary, 400)) + "</p>");
+                    if (item.comment) {
+                        parts.push("<div style=\"background:#f9f9f9;border-left:3pt solid #2980b9;padding:6pt 8pt;margin:4pt 0;font-style:italic;\"><strong>Analyst Note:</strong> " + htmlEscape(item.comment) + "</div>");
+                    }
+                    var raw = item.raw || "";
+                    if (raw.length > 4000) raw = raw.substring(0, 4000) + "\n\n[… truncated …]";
+                    parts.push("<pre>" + htmlEscape(raw) + "</pre>");
+                });
+            });
+        }
+
+        parts.push("<p style=\"margin-top:20pt;font-size:8pt;color:#666;\">Print or Save as PDF from the browser dialog. Same section order as <code>evidence2html.py</code> + <code>pdf_export.generate_din5008_pdf</code>.</p>");
+        parts.push("</body></html>");
+        return parts.join("");
+    }
+    function buildPdfReportHtml() {
+        return buildDin5008PythonAlignedHtml();
     }
     function openPdfExport() {
+        flushBrowserCacheIntoDom();
         var data = buildPdfReportHtml();
         var win = window.open("", "_blank");
         if (!win) {
