@@ -43,7 +43,10 @@ Pick your evidence folder and report name; the tool merges what it finds and ope
 
 -**Notes** - Export and autoformat after DIn5008 all notes and edits
            
- -**Attention**  - ! Browsercache holds all browser input if you delete it all notes or edits will be lost !
+ -**Attention**  - ! EDITS and NOTES live only in your BROWSERCHACHE !
+                 - ! CLEAR YOUR CHACHE YOU WILL LOOSE ALL EDITS !
+                 - If there is new evidence to be added after editing rerun evidence2html.py 
+                   match the absolute path (DIR+NAME must match) and open the browser you used to edit.
 
 ![Ports, cover fields, evidence refs](readme_png/2026-03-25_21-00.png)
 
@@ -105,6 +108,7 @@ def _discover_xml_files(evidence_dir: str) -> list:
 
 Easiest use is still the workflow `evidence2html.py`
 
+Confusion is just friction anything unclear let me know :)
 Anyone reporting a issue,bug or suggestions will qualifie for eternal bliss. 
 
 ## License
