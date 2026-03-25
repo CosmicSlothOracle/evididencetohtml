@@ -84,8 +84,7 @@ Example (TCP SYN sweep, XML out):
 
 nmap -sS -Pn -p 1-65535 -T4 --min-rate 500 10.0.0.1 -oX /path/to/evidence/scan_tcp.xml
 
-This function is easy to expand if needed adding more naming conventions if needed. 
-
+This function in evidence2html.py must be expanded for more naming conventions to work.
 def _discover_xml_files(evidence_dir: str) -> list:
 """Collect Nmap-style inputs. Includes merged_scan_*.xml (timestamped merges), not merged_scan.xml."""
     xml_files = []
