@@ -1,6 +1,6 @@
 # evidence2html
 Report stylesheet builds on Benjamin Erb’s nmap.xsl
-License disclaimer:
+// icense disclaimer //
 
     Copyright (c) 2004-2006 Benjamin Erb
     All rights reserved.
