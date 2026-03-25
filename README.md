@@ -85,10 +85,12 @@ Example (TCP SYN sweep, XML out):
 nmap -sS -Pn -p 1-65535 -T4 --min-rate 500 10.0.0.1 -oX /path/to/evidence/scan_tcp.xml
 
 This function is easy to expand if needed adding more naming conventions if needed. 
+
 def _discover_xml_files(evidence_dir: str) -> list:
-    """Collect Nmap-style inputs. Includes merged_scan_*.xml (timestamped merges), not merged_scan.xml."""
+"""Collect Nmap-style inputs. Includes merged_scan_*.xml (timestamped merges), not merged_scan.xml."""
     xml_files = []
-    patterns = ("scan_*.xml", "nmap*.xml", "portscan.xml", "services.xml", "merged_scan_*.xml") < < < < < < < < < < < < < <
+    patterns =-
+    > > > > > > > > > > > ("scan_*.xml", "nmap*.xml", "portscan.xml", "services.xml", "merged_scan_*.xml") < < < < < < < < < < < < < <
     seen = set()
     for pattern in patterns:
         found = sorted(glob.glob(os.path.join(evidence_dir, pattern)))
@@ -96,13 +98,13 @@ def _discover_xml_files(evidence_dir: str) -> list:
             base = os.path.basename(f)
             if base == "merged_scan.xml":
                 continue
-## Repo (main pieces)
+## Conclusion
 
----`evidence2html.py` — CLI and merge. `cosmic_clean.xsl` — report page. `pdf_export.py` — scripts cover CVE lookup and risk annex math if needed.
+`evidence2html.py` — CLI and merge. `cosmic_clean.xsl` — report page. `pdf_export.py` — scripts cover CVE lookup and risk annex math if needed.
 
------- Easiest use is still the workflow `evidence2html.py`
+Easiest use is still the workflow `evidence2html.py`
 
-----------------------------Anyone reporting a issue,bug or suggestions will qualifie for eternal bliss. 
+Anyone reporting a issue,bug or suggestions will qualifie for eternal bliss. 
 
 ## License
 
