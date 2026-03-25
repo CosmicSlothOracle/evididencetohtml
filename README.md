@@ -60,6 +60,8 @@ Pick your evidence folder and report name; the tool merges what it finds and ope
 
 ![DIN PDF: contents & summary](readme_png/2026-03-23_14-58.png)
 
+-**Export** - A 16x9 html micing the DIN5008 standard
+
 ![DIN PDF: full report sample](readme_png/2026-03-25_21-03.png)
 
 ## Typical evidence folder
