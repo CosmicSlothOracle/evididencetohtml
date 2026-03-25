@@ -37,13 +37,22 @@ Pick your evidence folder and report name; the tool merges what it finds and ope
 
 ![Port matrix](readme_png/2026-03-23_14-54_1.png)
 
+- **Editor** - Edit style however you seem fit 
+
 ![Port row: notes & commands](readme_png/2026-03-23_14-54.png)
+
+-**Notes** - Export and autoformat after DIn5008 all notes and edits
+           
+ -**Attention**  - ! Browsercache holds all browser input if you delete it all notes or edits will be lost !
 
 ![Ports, cover fields, evidence refs](readme_png/2026-03-25_21-00.png)
 
 - **Evidence** — Expandable items; edit titles and text; `E1`…`En` in notes for jump links. Optional risk views for richer PDF annexes.
 
 ![Evidence list & comments](readme_png/2026-03-23_14-56.png)
+
+-**Risk-Evaluation** - Run automated Risk assesements accordingly to NIST ISO BSI extracted only when nuclei evidence present
+                     - CVEE can be imported manually and appended to the export
 
 ![Risk UI & ISO-style annex in PDF](readme_png/2026-03-25_20-55.png)
 
@@ -73,6 +82,8 @@ Use clear prefixes on files (`evidence_*`, `banner_*`, …) so they classify cle
 ## Repo (main pieces)
 
 `evidence2html.py` — CLI and merge. `cosmic_clean.xsl` — report page. `pdf_export.py` — PDF helpers. Smaller scripts cover CVE lookup and risk annex math if you need them.
+
+Anyone reporting a issue,bug or suggestions will qualifie for eternal bliss. 
 
 ## License
 
