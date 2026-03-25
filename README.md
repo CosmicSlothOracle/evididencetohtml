@@ -90,7 +90,7 @@ def _discover_xml_files(evidence_dir: str) -> list:
 """Collect Nmap-style inputs. Includes merged_scan_*.xml (timestamped merges), not merged_scan.xml."""
     xml_files = []
     patterns =-
-    > > > > > > > > > > > ("scan_*.xml", "nmap*.xml", "portscan.xml", "services.xml", "merged_scan_*.xml") < < < < < < < < < < < < < <
+    > > > ("scan_*.xml", "nmap*.xml", "portscan.xml", "services.xml", "merged_scan_*.xml") < < < 
     seen = set()
     for pattern in patterns:
         found = sorted(glob.glob(os.path.join(evidence_dir, pattern)))
