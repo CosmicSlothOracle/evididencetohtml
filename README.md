@@ -59,11 +59,11 @@ Pick your evidence folder and report name; the tool merges what it finds and ope
 
 ![Risk UI & ISO-style annex in PDF](readme_png/2026-03-25_20-55.png)
 
-- **Export** — Save HTML or print PDF; what you changed on the page is what you get in the export.
+- **Export** — Export clean DIN5008 PDF Security Report
 
 ![DIN PDF: contents & summary](readme_png/2026-03-23_14-58.png)
 
--**Export** - A 16x9 html micing the DIN5008 standard
+-**Export** - A 16x9 html export
 
 ![DIN PDF: full report sample](readme_png/2026-03-25_21-03.png)
 
