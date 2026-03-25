@@ -3,14 +3,32 @@
 evidence2html — collect pen-test evidence files, merge with optional Nmap XML,
 and produce a single self-contained HTML report via xsltproc + XSL stylesheet.
 
+Risk annex workflow (CVSS / ISO 27005 / BSI / NIST):
+    1. Open the generated HTML: use **Export ▾** in the overview (or per-evidence risk panels).
+       From the browser: full HTML export, DIN 5008 print/PDF, 16:9 print/PDF,
+       reader A4 print/PDF, and risk_evaluations.json — aligned with pdf_export.py.
+    2. Optional CLI: place risk_evaluations.json next to the report for auto-detect when
+       generating DIN PDF from this script.
+    3. CVE technical reference (NVD + EPSS + CISA KEV): run
+       ``python3 vuln_ref_lookup.py CVE-… --json`` and paste into the report CVSS panel
+       (technical reference only — separate from ISO/BSI/NIST organizational fields).
+    4. Reader A4 PDF (optional): ``--reader-pdf`` — same report structure as HTML,
+       hierarchy-first typography and muted palette (Chromium); see pdf_export.generate_reader_pdf.
+
 Usage:
-    python3 evidence2html.py path/to/evidence/
-    python3 evidence2html.py path/to/evidence/ scan1.xml scan2.xml
-    python3 evidence2html.py -e path/to/evidence/ -o report.html
+    python3 evidence2html.py                                    # interactive wizard (8 steps)
+    python3 evidence2html.py path/to/evidence/ -o report.html   # non-interactive batch
+    python3 evidence2html.py path/to/evidence/ --no-pdf
+    python3 evidence2html.py path/to/evidence/ --eval-json risk_evaluations.json
+    python3 evidence2html.py path/to/evidence/ -o report.html --fetch-cve-refs  # CVE bundle, no prompt
+    python3 evidence2html.py path/to/evidence/ -o report.html --reader-pdf      # + reader A4 PDF
 """
 
+import argparse
 import datetime
 import glob
+import importlib.util
+import shutil
 import hashlib
 import json
 import os
@@ -19,10 +37,11 @@ import shlex
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
+from typing import List, Optional
 from urllib.parse import urlparse
 
 try:
-    from pdf_export import generate_16x9_pdf, generate_din5008_pdf
+    from pdf_export import generate_16x9_pdf, generate_din5008_pdf, generate_reader_pdf
     _PDF_AVAILABLE = True
 except ImportError:
     _PDF_AVAILABLE = False
@@ -36,10 +55,58 @@ DEFAULT_CYBERSTEPPER_ART = r"""
      /____/                                 /_/   /_/                 
 """
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+def _terminal_columns(fallback: int = 80) -> int:
+    """Best-effort terminal width for CLI banner fit checks."""
+    try:
+        w = shutil.get_terminal_size().columns
+        return max(40, w)
+    except Exception:
+        return fallback
+
+
+def _banner_max_display_width(text: str) -> int:
+    return max((len(line.expandtabs(8)) for line in text.splitlines()), default=0)
+
+
+def _load_optional_custom_cli_banner(script_dir: str) -> str:
+    """Load example_ascii.py → example_ascii.txt if present; empty string on failure."""
+    loader = os.path.join(script_dir, "example_ascii.py")
+    if not os.path.isfile(loader):
+        return ""
+    try:
+        spec = importlib.util.spec_from_file_location(
+            "_evidence2html_cli_banner", loader
+        )
+        if spec is None or spec.loader is None:
+            return ""
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        fn = getattr(mod, "get_cli_banner", None)
+        if not callable(fn):
+            return ""
+        return str(fn() or "").strip()
+    except Exception:
+        return ""
+
+
+def _print_cli_banner(script_dir: str) -> None:
+    """
+    Print a startup banner. Custom art (example_ascii.txt via example_ascii.py) is
+    used only if every line fits the current terminal width; otherwise fall back to
+    DEFAULT_CYBERSTEPPER_ART. For portable art, keep lines ≤ 72–80 characters.
+    """
+    custom = _load_optional_custom_cli_banner(script_dir)
+    term_w = _terminal_columns()
+    if custom and _banner_max_display_width(custom) <= term_w:
+        print(custom, flush=True)
+    else:
+        print(DEFAULT_CYBERSTEPPER_ART.strip("\n"), flush=True)
+    print(flush=True)
+
 
 def safe_read_text(path, max_chars=120_000):
     binary_ext = {".pcap", ".pcapng", ".cap", ".zip", ".7z", ".burp", ".sqlite", ".db"}
@@ -223,24 +290,50 @@ def classify_evidence(filename):
 # Evidence parsers  (structured extraction for known tool outputs)
 # ---------------------------------------------------------------------------
 
-def parse_ffuf(content, filename):
+FFUF_MAX_INSIGHT_ROWS = 500
+
+
+def parse_ffuf_dict(data, max_results=FFUF_MAX_INSIGHT_ROWS):
+    """Build tactical findings from ffuf JSON object (full result set may be huge)."""
     findings = []
     try:
-        data = json.loads(content)
-        for res in data.get("results", []):
+        results = data.get("results") or []
+        non404 = [r for r in results if r.get("status", 0) != 404]
+
+        def _interest_score(res):
+            s = int(res.get("status", 0) or 0)
+            if s == 200:
+                return 0
+            if 300 <= s < 400:
+                return 1
+            if s in (401, 403):
+                return 2
+            if s >= 500:
+                return 3
+            return 4
+
+        non404.sort(key=_interest_score)
+        for res in non404[:max_results]:
             status = res.get("status", 0)
-            if status != 404:
-                findings.append({
-                    "tool": "ffuf", "type": "web_discovery",
-                    "host": res.get("host", ""), "url": res.get("url", ""),
-                    "status": str(status), "length": str(res.get("length", 0)),
-                    "words": str(res.get("words", 0)), "lines": str(res.get("lines", 0)),
-                    "content_type": res.get("content-type", ""),
-                    "dedup_key": f"{res.get('url', '')}_{status}",
-                })
+            findings.append({
+                "tool": "ffuf", "type": "web_discovery",
+                "host": res.get("host", ""), "url": res.get("url", ""),
+                "status": str(status), "length": str(res.get("length", 0)),
+                "words": str(res.get("words", 0)), "lines": str(res.get("lines", 0)),
+                "content_type": res.get("content-type", ""),
+                "dedup_key": f"{res.get('url', '')}_{status}",
+            })
     except Exception:
         pass
     return findings
+
+
+def parse_ffuf(content, filename):
+    try:
+        data = json.loads(content)
+    except Exception:
+        return []
+    return parse_ffuf_dict(data, max_results=FFUF_MAX_INSIGHT_ROWS)
 
 
 def parse_testssl(content, filename):
@@ -363,15 +456,55 @@ def collect_evidence(evidence_dir):
     for path in paths:
         if os.path.isdir(path):
             continue
-        content = safe_read_text(path)
+        bn_low = os.path.basename(path).lower()
         cat = classify_evidence(path)
+        tool = infer_tool(path)
+
+        # Large ffuf JSON: parse full file for findings; keep small raw + hash-based dedup
+        if bn_low.startswith("evidence_ffuf") and bn_low.endswith(".json"):
+            try:
+                with open(path, "rb") as bf:
+                    raw_bytes = bf.read()
+                file_hash = hashlib.sha256(raw_bytes).hexdigest()
+                data = json.loads(raw_bytes.decode("utf-8", errors="replace"))
+            except Exception:
+                pass
+            else:
+                status = "OK"
+                nres = len(data.get("results") or [])
+                parsed_findings = parse_ffuf_dict(data, max_results=FFUF_MAX_INSIGHT_ROWS)
+                cmd = data.get("commandline") or ""
+                raw_out = (
+                    f"[ffuf JSON — {os.path.basename(path)} — {nres} results in file, "
+                    f"{len(parsed_findings)} non-404 rows exported to tactical matrix (cap {FFUF_MAX_INSIGHT_ROWS})]\n\n"
+                    f"commandline: {cmd}\n\n"
+                    f"full path: {path}"
+                )
+                summary = f"ffuf JSON: {nres} results ({len(parsed_findings)} exported to matrix)"
+                dk = hashlib.sha256(f"{tool}|{cat}|{file_hash}".encode("utf-8", errors="ignore")).hexdigest()
+                if dk in dedup_keys:
+                    stats["skipped_duplicate"] += 1
+                    stats["skipped_duplicate_files"].append(path)
+                    continue
+                dedup_keys.add(dk)
+                mtime = os.path.getmtime(path)
+                items.append({
+                    "file": os.path.basename(path),
+                    "timestamp": datetime.datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %H:%M:%S"),
+                    "category": cat, "tool": tool, "status": status,
+                    "summary": summary[:500],
+                    "raw": raw_out,
+                    "findings": parsed_findings,
+                })
+                continue
+
+        content = safe_read_text(path)
         status = evidence_status(content, path)
         if status == "EMPTY":
             stats["skipped_empty"] += 1
             stats["skipped_empty_files"].append(path)
             continue
 
-        tool = infer_tool(path)
         parsed_findings = parse_evidence_content(cat, content, path) if status == "OK" else []
         norm = normalize_evidence_for_dedup(content)
         dk = hashlib.sha256(f"{tool}|{cat}|{norm}".encode("utf-8", errors="ignore")).hexdigest()
@@ -764,6 +897,56 @@ def generate_html(xml_file, xsl_file, output_html):
         sys.exit(1)
 
 
+def _resolve_risk_eval_json_path(output_html, evidence_dir):
+    """
+    Find risk_evaluations.json for DIN 5008 annexes.
+
+    Search order (first existing file wins):
+      1. <report_basename>_risk_evaluations.json next to output_html
+      2. risk_evaluations.json next to output_html
+      3. risk_evaluations.json in evidence_dir
+    """
+    out_dir = os.path.dirname(os.path.abspath(output_html)) or "."
+    stem = os.path.splitext(os.path.basename(output_html))[0]
+    candidates = [
+        os.path.join(out_dir, f"{stem}_risk_evaluations.json"),
+        os.path.join(out_dir, "risk_evaluations.json"),
+    ]
+    if evidence_dir:
+        candidates.append(os.path.join(os.path.abspath(evidence_dir), "risk_evaluations.json"))
+    for p in candidates:
+        if p and os.path.isfile(p):
+            return os.path.abspath(p)
+    return None
+
+
+def _prompt_risk_eval_json(output_html, evidence_dir):
+    """
+    Ask whether to attach risk JSON to DIN 5008 export.
+    Returns absolute path or None.
+    """
+    auto = _resolve_risk_eval_json_path(output_html, evidence_dir)
+    if auto:
+        print(f"\n[+] Found risk JSON: {auto}")
+        use = input("[?] Attach to DIN 5008 PDF? (y/n, default=y): ").strip().lower()
+        if use == "n":
+            return None
+        return auto
+
+    print(
+        "\n[*] No risk_evaluations.json next to the HTML output or in the evidence directory."
+    )
+    print("    In the browser: use the PDF panel → export JSON (e.g. risk_evaluations.json).")
+    path = input("[?] Path to JSON manually (Enter = skip risk annexes): ").strip()
+    if not path:
+        return None
+    path = os.path.abspath(os.path.expanduser(path))
+    if not os.path.isfile(path):
+        print(f"[-] File not found: {path}")
+        return None
+    return path
+
+
 def inject_analyst_persistence_script(html_path):
     """Inject script to persist analyst comments into HTML for export."""
     persistence_script = '''
@@ -845,6 +1028,19 @@ def inject_analyst_persistence_script(html_path):
         }
       } catch (e) {}
     });
+
+    // DIN 5008 cover fields (inline editors)
+    document.querySelectorAll('[data-din-field]').forEach(function (el) {
+      var f = el.getAttribute('data-din-field');
+      if (!f) return;
+      try {
+        var dv = localStorage.getItem('cosmicAnal:v1:din:' + f);
+        if (dv) {
+          el.textContent = dv;
+          el.setAttribute('data-persisted-din', f);
+        }
+      } catch (e) {}
+    });
   }
 
   if (document.readyState === 'loading') {
@@ -885,55 +1081,122 @@ def inject_analyst_persistence_script(html_path):
 
 
 # ---------------------------------------------------------------------------
-# Interactive CLI
+# Pipeline + CLI (interactive wizard or batch args)
 # ---------------------------------------------------------------------------
 
-def main():
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    xsl_file = os.path.join(script_dir, "cosmic_clean.xsl")
+# NVD/MITRE sequence is typically 4+ digits (not 7+); nuclei and scanners emit shorter IDs.
+_CVE_ID_RE = re.compile(r"\bCVE-\d{4}-\d{4,}\b", re.IGNORECASE)
 
-    if not os.path.isfile(xsl_file):
-        print(f"[-] XSL stylesheet not found: {xsl_file}")
-        sys.exit(1)
 
-    print("\n" + "=" * 60)
-    print("Evidence to HTML Report Generator")
-    print("=" * 60)
+def discover_cves_in_evidence(evidence_dir: str, max_files: int = 800) -> List[str]:
+    """Scan evidence trees for CVE identifiers in readable text (best-effort)."""
+    found: set = set()
+    n = 0
+    for root in _evidence_search_roots(evidence_dir):
+        for dirpath, _, filenames in os.walk(root):
+            for fn in filenames:
+                if n >= max_files:
+                    return sorted(found)
+                path = os.path.join(dirpath, fn)
+                if not os.path.isfile(path):
+                    continue
+                low = fn.lower()
+                if low.endswith(
+                    (
+                        ".pcap",
+                        ".pcapng",
+                        ".cap",
+                        ".zip",
+                        ".7z",
+                        ".gz",
+                        ".pdf",
+                        ".png",
+                        ".jpg",
+                        ".jpeg",
+                        ".gif",
+                        ".webp",
+                        ".sqlite",
+                        ".db",
+                    )
+                ):
+                    continue
+                try:
+                    content = safe_read_text(path, max_chars=200_000)
+                except OSError:
+                    continue
+                for m in _CVE_ID_RE.finditer(content):
+                    found.add(m.group(0).upper())
+                n += 1
+    return sorted(found)
 
-    evidence_dir = input("\n[?] Enter evidence directory path: ").strip()
-    if not evidence_dir:
-        print("[-] No directory specified.")
-        sys.exit(1)
 
-    evidence_dir = os.path.abspath(evidence_dir)
-    if not os.path.isdir(evidence_dir):
-        print(f"[-] Directory not found: {evidence_dir}")
-        sys.exit(1)
+def write_cve_refs_bundle(
+    output_html: str,
+    evidence_dir: str,
+) -> Optional[str]:
+    """
+    For each CVE found in evidence text, call vuln_ref_lookup (NVD+EPSS+KEV).
+    Writes <report_stem>_cve_refs.json next to output_html.
+    """
+    try:
+        from vuln_ref_lookup import lookup_vuln_reference
+    except ImportError:
+        print("[-] vuln_ref_lookup not importable — skipping CVE reference bundle.")
+        return None
 
-    output_html = input("\n[?] HTML output filename (default: report.html): ").strip() or "report.html"
-    xml_file = "merged_scan.xml"
+    cves = discover_cves_in_evidence(evidence_dir)
+    if not cves:
+        print("[*] No CVE IDs found in evidence text — no *_cve_refs.json written.")
+        return None
 
-    nuclei_json = None
-    nuclei_path = os.path.join(evidence_dir, "nuclei.json")
-    if os.path.exists(nuclei_path):
-        use_nuclei = input(f"\n[?] Found nuclei.json — include it? (y/n, default: y): ").strip().lower()
-        if use_nuclei != "n":
-            nuclei_json = nuclei_path
-            print(f"[+] Using: {nuclei_json}")
+    bundle: dict = {}
+    for i, cve in enumerate(cves, 1):
+        print(f"    [{i}/{len(cves)}] {cve} ...")
+        try:
+            bundle[cve] = lookup_vuln_reference(cve, with_epss=True, with_kev=True)
+        except (ValueError, RuntimeError, OSError) as exc:
+            bundle[cve] = {"cve": cve, "error": str(exc)}
 
+    out_dir = os.path.dirname(os.path.abspath(output_html)) or "."
+    stem = os.path.splitext(os.path.basename(output_html))[0]
+    out_path = os.path.join(out_dir, f"{stem}_cve_refs.json")
+    payload = {
+        "schema": "cosmic-cve-refs-bundle/1",
+        "generated": datetime.datetime.now(datetime.timezone.utc)
+        .replace(microsecond=0)
+        .isoformat()
+        .replace("+00:00", "Z"),
+        "note": (
+            "Technical reference (NVD / EPSS / CISA KEV). Organizational risk stays separate "
+            "(ISO / BSI / NIST). Per-CVE JSON can be pasted into the report CVSS panel."
+        ),
+        "cves": bundle,
+    }
+    with open(out_path, "w", encoding="utf-8") as f:
+        json.dump(payload, f, indent=2, ensure_ascii=False)
+    print(f"[+] CVE references written: {out_path} ({len(cves)} CVE(s))")
+    return out_path
+
+
+def _discover_xml_files(evidence_dir: str) -> list:
+    """Collect Nmap-style inputs. Includes merged_scan_*.xml (timestamped merges), not merged_scan.xml."""
     xml_files = []
-    for pattern in ("scan_*.xml", "nmap*.xml", "portscan.xml", "services.xml"):
+    patterns = ("scan_*.xml", "nmap*.xml", "portscan.xml", "services.xml", "merged_scan_*.xml")
+    seen = set()
+    for pattern in patterns:
         found = sorted(glob.glob(os.path.join(evidence_dir, pattern)))
-        found = [f for f in found if not os.path.basename(f).startswith("merged_scan")]
-        xml_files.extend(found)
+        for f in found:
+            base = os.path.basename(f)
+            if base == "merged_scan.xml":
+                continue
+            if f not in seen:
+                seen.add(f)
+                xml_files.append(f)
+    return xml_files
 
-    if xml_files:
-        print(f"\n[+] Found {len(xml_files)} Nmap XML file(s):")
-        for f in xml_files:
-            print(f"    - {os.path.basename(f)}")
-    else:
-        print("\n[*] No Nmap XMLs found — building evidence-only report")
 
+def _pick_ascii_dir(evidence_dir: str, script_dir: str, interactive: bool) -> tuple:
+    """Returns (ascii_dir or None, ascii_candidates_with_files)."""
     ascii_candidates = [
         os.path.join(evidence_dir, "ascii_arts"),
         os.path.join(evidence_dir, "ascii"),
@@ -945,59 +1208,294 @@ def main():
         if os.path.isdir(d) and glob.glob(os.path.join(d, "*.txt")):
             ascii_candidates_with_files.append(d)
 
-    ascii_dir = None
-    if ascii_candidates_with_files:
-        if len(ascii_candidates_with_files) == 1:
-            ascii_dir = ascii_candidates_with_files[0]
-        else:
-            print("\n[?] Multiple ASCII art directories found:")
-            for i, d in enumerate(ascii_candidates_with_files, start=1):
-                print(f"    {i}) {d}")
-            selected = input("[?] Pick one (number, default: 1): ").strip()
-            try:
-                idx = int(selected) - 1 if selected else 0
-                ascii_dir = ascii_candidates_with_files[idx]
-            except Exception:
-                ascii_dir = ascii_candidates_with_files[0]
+    if not ascii_candidates_with_files:
+        return None, ascii_candidates_with_files
+    if len(ascii_candidates_with_files) == 1:
+        return ascii_candidates_with_files[0], ascii_candidates_with_files
+    if not interactive:
+        return ascii_candidates_with_files[0], ascii_candidates_with_files
+    print("\n[?] Multiple ASCII art directories found:")
+    for i, d in enumerate(ascii_candidates_with_files, start=1):
+        print(f"    {i}) {d}")
+    selected = input("[?] Choose number (Enter = 1): ").strip()
+    try:
+        idx = int(selected) - 1 if selected else 0
+        return ascii_candidates_with_files[idx], ascii_candidates_with_files
+    except Exception:
+        return ascii_candidates_with_files[0], ascii_candidates_with_files
 
-        ascii_files = sorted(glob.glob(os.path.join(ascii_dir, "*.txt")))
-        print(f"\n[+] Found {len(ascii_files)} ASCII art file(s) in {ascii_dir}:")
-        for f in ascii_files:
-            print(f"    - {os.path.basename(f)}")
-    else:
-        print("\n[*] No ASCII art directory found. Using built-in cyberstepper art.")
 
-    print("\n" + "=" * 60)
-    print("Starting pipeline…")
-    print("=" * 60 + "\n")
+def run_report_pipeline(
+    evidence_dir: str,
+    output_html: str,
+    *,
+    xml_file: str = "merged_scan.xml",
+    script_dir: Optional[str] = None,
+    nuclei_json=None,
+    ascii_dir=None,
+    skip_pdf: bool = False,
+    want_16x9: bool = True,
+    want_din: bool = True,
+    want_reader: bool = False,
+    eval_json_path: Optional[str] = None,
+    fetch_cve_refs: bool = False,
+) -> bool:
+    """Build merged XML + HTML + optional PDFs. Returns True on success."""
+    if script_dir is None:
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+    xsl_file = os.path.join(script_dir, "cosmic_clean.xsl")
+    if not os.path.isfile(xsl_file):
+        print(f"[-] XSL stylesheet not found: {xsl_file}")
+        return False
 
-    if merge_nmap_xml(xml_files, xml_file, xsl_file,
-                      nuclei_json, evidence_dir=evidence_dir,
-                      ascii_dir=ascii_dir):
+    evidence_dir = os.path.abspath(evidence_dir)
+    xml_files = _discover_xml_files(evidence_dir)
+
+    if merge_nmap_xml(
+        xml_files,
+        xml_file,
+        xsl_file,
+        nuclei_json,
+        evidence_dir=evidence_dir,
+        ascii_dir=ascii_dir,
+    ):
         generate_html(xml_file, xsl_file, output_html)
-        
-        # Inject analyst persistence for HTML export
         inject_analyst_persistence_script(output_html)
 
-        # ----- PDF exports -----
-        if _PDF_AVAILABLE:
+        if fetch_cve_refs:
+            print("\n[*] CVE references (NVD + EPSS + CISA KEV) ...")
+            write_cve_refs_bundle(output_html, evidence_dir)
+
+        if not skip_pdf and _PDF_AVAILABLE:
             stem = os.path.splitext(output_html)[0]
+            if want_16x9:
+                generate_16x9_pdf(output_html, stem + "_16x9.pdf")
+            if want_din:
+                eval_use = eval_json_path
+                if eval_use is None:
+                    eval_use = _resolve_risk_eval_json_path(output_html, evidence_dir)
+                if eval_use:
+                    print(f"[*] DIN 5008 with risk JSON: {eval_use}")
+                else:
+                    print("[*] DIN 5008 without risk JSON (add later in the browser if needed)")
+                generate_din5008_pdf(xml_file, stem + "_din5008.pdf", eval_json_path=eval_use)
+            if want_reader:
+                generate_reader_pdf(output_html, stem + "_reader.pdf")
+        elif not skip_pdf and not _PDF_AVAILABLE:
+            print("[*] pdf_export not available — skipping PDF generation")
 
-            want_16x9 = input("\n[?] Generate 16:9 PDF? (y/n, default: y): ").strip().lower()
-            if want_16x9 != "n":
-                pdf_16x9 = stem + "_16x9.pdf"
-                generate_16x9_pdf(output_html, pdf_16x9)
+        print(f"\n[✓] Report: {os.path.abspath(output_html)}")
+        print(
+            "[i] Browser: Export ▾ = DIN / 16:9 / reader A4 / HTML / risk JSON; cover fields & note stay in the overview."
+        )
+        return True
+    return False
 
-            want_din = input("[?] Generate DIN 5008 PDF? (y/n, default: y): ").strip().lower()
-            if want_din != "n":
-                pdf_din = stem + "_din5008.pdf"
-                generate_din5008_pdf(xml_file, pdf_din)
-        else:
-            print("[*] pdf_export.py not found — skipping PDF generation")
 
-        print("\n" + "=" * 60)
-        print(f"[✓] Done! Report: {os.path.abspath(output_html)}")
-        print("=" * 60 + "\n")
+def interactive_cli_wizard():
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    _print_cli_banner(script_dir)
+    xsl_file = os.path.join(script_dir, "cosmic_clean.xsl")
+    if not os.path.isfile(xsl_file):
+        print(f"[-] XSL stylesheet not found: {xsl_file}")
+        sys.exit(1)
+
+    print("\n" + "=" * 60)
+    print("Evidence → HTML   (interactive wizard)")
+    print("=" * 60)
+
+    print("\n--- STEP 1/8 — Evidence directory (required) ---")
+    evidence_dir = input("[?] Path to evidence directory: ").strip()
+    if not evidence_dir:
+        print("[-] Aborted: no directory given.")
+        sys.exit(1)
+    evidence_dir = os.path.abspath(evidence_dir)
+    if not os.path.isdir(evidence_dir):
+        print(f"[-] Directory not found: {evidence_dir}")
+        sys.exit(1)
+
+    print("\n--- STEP 2/8 — HTML output file ---")
+    output_html = input("[?] Output HTML filename (Enter = report.html): ").strip() or "report.html"
+    xml_file = "merged_scan.xml"
+
+    print("\n--- STEP 3/8 — Nuclei (optional) ---")
+    nuclei_json = None
+    nuclei_path = os.path.join(evidence_dir, "nuclei.json")
+    if os.path.exists(nuclei_path):
+        use_nuclei = input("[?] nuclei.json found — merge it? (y/n, Enter=y): ").strip().lower()
+        if use_nuclei != "n":
+            nuclei_json = nuclei_path
+            print(f"[+] {nuclei_json}")
+    else:
+        print("[*] No nuclei.json in the evidence directory.")
+
+    print("\n--- STEP 4/8 — Nmap XML (auto-discovered) ---")
+    xml_files = _discover_xml_files(evidence_dir)
+    if xml_files:
+        print(f"[+] {len(xml_files)} Nmap XML file(s):")
+        for f in xml_files:
+            print(f"    - {os.path.basename(f)}")
+    else:
+        print("[*] No Nmap XML — evidence content only.")
+
+    print("\n--- STEP 5/8 — ASCII art directory ---")
+    ascii_dir, ascii_cands = _pick_ascii_dir(evidence_dir, script_dir, interactive=True)
+    if ascii_dir:
+        arts = sorted(glob.glob(os.path.join(ascii_dir, "*.txt")))
+        print(f"[+] ASCII: {len(arts)} file(s) in {ascii_dir}")
+    else:
+        print("[*] No ASCII directory — built-in motif.")
+
+    print("\n--- STEP 6/8 — PDF export (Chromium) ---")
+    want_16x9 = True
+    want_din = True
+    want_reader = False
+    skip_pdf = False
+    if _PDF_AVAILABLE:
+        w16 = input("[?] Generate 16:9 PDF? (y/n, Enter=y): ").strip().lower()
+        want_16x9 = w16 != "n"
+        wd = input("[?] Generate DIN 5008 PDF? (y/n, Enter=y): ").strip().lower()
+        want_din = wd != "n"
+        wr = input(
+            "[?] Generate reader A4 PDF (structure-faithful, muted palette)? (y/n, Enter=n): "
+        ).strip().lower()
+        want_reader = wr == "y"
+    else:
+        skip_pdf = True
+        print("[*] pdf_export not importable — HTML only.")
+
+    eval_json = None
+    if want_din and _PDF_AVAILABLE:
+        print("\n--- STEP 7/8 — Risk JSON for DIN annexes ---")
+        eval_json = _prompt_risk_eval_json(output_html, evidence_dir)
+    else:
+        print("\n--- STEP 7/8 — Risk JSON (skipped — no DIN PDF) ---")
+        print("[*] You can add risk JSON later in the browser, or run again with DIN PDF enabled.")
+
+    print("\n--- STEP 8/8 — CVE references (NVD + EPSS + CISA KEV) ---")
+    print(
+        "    After HTML: scan evidence text for CVE IDs, fetch over the network, "
+        "and write <report_basename>_cve_refs.json next to the report."
+    )
+    ref_ans = input(
+        "[?] Fetch CVE references now? (y/n, Enter=n): "
+    ).strip().lower()
+    fetch_cve_refs = ref_ans == "y"
+
+    print("\n" + "=" * 60)
+    print("Starting pipeline ...")
+    print("=" * 60 + "\n")
+
+    ok = run_report_pipeline(
+        evidence_dir,
+        output_html,
+        xml_file=xml_file,
+        script_dir=script_dir,
+        nuclei_json=nuclei_json,
+        ascii_dir=ascii_dir,
+        skip_pdf=skip_pdf,
+        want_16x9=want_16x9,
+        want_din=want_din,
+        want_reader=want_reader,
+        eval_json_path=eval_json,
+        fetch_cve_refs=fetch_cve_refs,
+    )
+    if not ok:
+        sys.exit(1)
+
+
+def main():
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    parser = argparse.ArgumentParser(
+        description="Evidence → merged XML + HTML report (+ optional PDF). "
+        "With no positional argument: run the interactive wizard.",
+    )
+    parser.add_argument(
+        "evidence_dir",
+        nargs="?",
+        help="Evidence directory (omit to run interactive wizard)",
+    )
+    parser.add_argument("-o", "--output", default="report.html", help="Output HTML path")
+    parser.add_argument("--xml-out", default="merged_scan.xml", help="Merged XML filename")
+    parser.add_argument("--no-pdf", action="store_true", help="Skip all PDF generation")
+    parser.add_argument("--no-16x9", action="store_true", help="Skip 16:9 PDF")
+    parser.add_argument("--no-din", action="store_true", help="Skip DIN 5008 PDF")
+    parser.add_argument(
+        "--reader-pdf",
+        action="store_true",
+        help="Also generate reader A4 PDF (structure-faithful, muted palette)",
+    )
+    parser.add_argument("--no-nuclei", action="store_true", help="Do not merge nuclei.json even if present")
+    parser.add_argument("--nuclei", metavar="PATH", help="Explicit path to nuclei.json")
+    parser.add_argument("--ascii-dir", metavar="PATH", help="ASCII art directory")
+    parser.add_argument(
+        "--eval-json",
+        metavar="PATH",
+        help="risk_evaluations.json for DIN annexes (browser export)",
+    )
+    parser.add_argument(
+        "--fetch-cve-refs",
+        action="store_true",
+        help=(
+            "After HTML: scan evidence texts for CVE-IDs, fetch NVD+EPSS+KEV, "
+            "write <output_stem>_cve_refs.json next to the report"
+        ),
+    )
+    args = parser.parse_args()
+
+    if not args.evidence_dir:
+        interactive_cli_wizard()
+        return
+
+    _print_cli_banner(script_dir)
+
+    xsl_file = os.path.join(script_dir, "cosmic_clean.xsl")
+    if not os.path.isfile(xsl_file):
+        print(f"[-] XSL stylesheet not found: {xsl_file}")
+        sys.exit(1)
+
+    evidence_dir = os.path.abspath(args.evidence_dir)
+    if not os.path.isdir(evidence_dir):
+        print(f"[-] Directory not found: {evidence_dir}")
+        sys.exit(1)
+
+    nuclei_json = None
+    if args.nuclei:
+        nuclei_json = os.path.abspath(args.nuclei) if os.path.isfile(args.nuclei) else None
+    elif not args.no_nuclei:
+        np = os.path.join(evidence_dir, "nuclei.json")
+        if os.path.isfile(np):
+            nuclei_json = np
+
+    ascii_dir = args.ascii_dir
+    if ascii_dir:
+        ascii_dir = os.path.abspath(ascii_dir)
+    else:
+        ascii_dir, _ = _pick_ascii_dir(evidence_dir, script_dir, interactive=False)
+
+    eval_path = args.eval_json
+    if eval_path:
+        eval_path = os.path.abspath(os.path.expanduser(eval_path))
+        if not os.path.isfile(eval_path):
+            print(f"[-] --eval-json not found: {eval_path}")
+            sys.exit(1)
+
+    ok = run_report_pipeline(
+        evidence_dir,
+        args.output,
+        xml_file=args.xml_out,
+        script_dir=script_dir,
+        nuclei_json=nuclei_json,
+        ascii_dir=ascii_dir,
+        skip_pdf=args.no_pdf,
+        want_16x9=not args.no_16x9,
+        want_din=not args.no_din,
+        want_reader=args.reader_pdf,
+        eval_json_path=eval_path,
+        fetch_cve_refs=args.fetch_cve_refs,
+    )
+    if not ok:
+        sys.exit(1)
 
 
 if __name__ == "__main__":

@@ -106,6 +106,24 @@
             --ok: var(--proto-1); --warn: var(--proto-5); --bad: var(--retro-6); --paper: var(--retro-13); --cream: var(--retro-12);
             --cat-evidence: var(--retro-5); --cat-fingerprint: var(--retro-6); --cat-commands: var(--retro-3);
             --cat-scripts: var(--retro-4); --cat-analyst: var(--retro-8); --note-signal: #ff3e3e;
+            --good: var(--ok);
+            /*
+             * Form / native control chrome: accent-tinted dark surface + fixed light foreground.
+             * Avoids low-contrast pairs when --paper/--retro-0 are mid tones (e.g. many console themes).
+             */
+            --ui-field-bg: color-mix(in srgb, #06080d 72%, var(--accent) 28%);
+            --ui-field-fg: #f2f5fc;
+            --ui-field-muted: #9aa8bf;
+            --ui-field-border: color-mix(in srgb, #101218 62%, var(--accent) 38%);
+            --ui-field-placeholder: rgba(242, 245, 252, 0.52);
+            --ui-label-fg: #e6ebf7;
+        }
+
+        @supports not (color: color-mix(in srgb, #000, #fff)) {
+            :root {
+                --ui-field-bg: #12151c;
+                --ui-field-border: var(--accent);
+            }
         }
 
         /* Themes */
@@ -370,6 +388,15 @@
         .report-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
         .report-btn { border: 2px solid var(--outline); background: var(--retro-2); color: var(--paper); border-radius: 6px; padding: 8px 12px; font-family: "Space Mono", monospace; font-size: 0.84rem; cursor: pointer; transition: all 0.1s ease; text-shadow: 0 1px 0 rgba(0,0,0,0.35); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04); }
         .report-btn:hover { background: var(--retro-3); color: var(--retro-14); transform: translateY(-1px); }
+        /* Theme list: native select — field chrome, not button styling */
+        #unified-theme-selector.report-btn {
+            background: var(--ui-field-bg); color: var(--ui-field-fg); border: 1.5px solid var(--ui-field-border);
+            text-shadow: none; color-scheme: dark; box-shadow: inset 0 1px 3px rgba(0,0,0,0.38);
+            transform: none;
+        }
+        #unified-theme-selector.report-btn:hover {
+            background: var(--ui-field-bg); color: var(--ui-field-fg); filter: brightness(1.07); transform: none;
+        }
         .report-btn.active { background: var(--note-signal); color: var(--retro-black); border-color: var(--retro-black); }
         .report-link-action { border: none; padding: 0; min-width: unset; width: auto; background: transparent; color: var(--ui-link, var(--accent)); font-size: 0.79rem; text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 2px; box-shadow: none; }
         .report-link-action:hover { background: transparent; color: var(--paper); transform: none; }
@@ -384,12 +411,28 @@
         .color-dot { width: 22px; height: 22px; border-radius: 4px; border: 1px solid var(--outline); cursor: pointer; transition: transform 0.1s; }
         .color-dot:hover { transform: scale(1.15); border-color: var(--paper); }
         .color-dot.active { border-color: var(--paper); border-width: 2px; }
-        .analysis-size-select { background: var(--retro-0); color: var(--paper); border: 1px solid var(--outline); border-radius: 4px; padding: 4px 6px; font-size: 0.8rem; }
+        .analysis-size-select {
+            background: var(--ui-field-bg); color: var(--ui-field-fg); border: 1.5px solid var(--ui-field-border);
+            border-radius: 4px; padding: 4px 6px; font-size: 0.8rem; color-scheme: dark;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.35);
+        }
         
-        .analysis-input { width: 100%; min-height: 80px; background: var(--retro-0); color: var(--paper); border: 1px solid var(--outline); border-radius: 6px; padding: 10px; font-family: "Space Mono", monospace; font-size: 0.84rem; }
+        .analysis-input {
+            width: 100%; min-height: 80px; background: var(--ui-field-bg); color: var(--ui-field-fg);
+            border: 1.5px solid var(--ui-field-border); border-radius: 6px; padding: 10px 12px;
+            font-family: "Space Mono", monospace; font-size: 0.84rem; line-height: 1.35;
+            color-scheme: dark; box-shadow: inset 0 1px 3px rgba(0,0,0,0.38);
+        }
+        .analysis-input::placeholder { color: var(--ui-field-placeholder); opacity: 1; }
         .analysis-input.analysis-rich { min-height: 120px; overflow-y: auto; }
         .analysis-display-html { font-family: "Space Mono", monospace; font-size: 0.84rem; color: var(--paper); white-space: pre-wrap; word-break: break-word; }
-        .analysis-name { width: 100%; margin-bottom: 10px; background: var(--retro-0); color: var(--paper); border: 1px solid var(--outline); border-radius: 6px; padding: 10px; font-family: "Space Mono", monospace; font-size: 0.84rem; }
+        .analysis-name {
+            width: 100%; margin-bottom: 10px; background: var(--ui-field-bg); color: var(--ui-field-fg);
+            border: 1.5px solid var(--ui-field-border); border-radius: 6px; padding: 10px 12px;
+            font-family: "Space Mono", monospace; font-size: 0.84rem; color-scheme: dark;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.38);
+        }
+        .analysis-name::placeholder { color: var(--ui-field-placeholder); opacity: 1; }
         .analysis-status { color: var(--text-muted); font-size: 0.78rem; }
         .analysis-preview { color: var(--cream); font-weight: 400; margin-left: 8px; font-size: 0.84rem; }
         .analysis-render-meta { color: var(--paper); font-size: 0.8rem; margin-bottom: 10px; opacity: 0.8; }
@@ -397,6 +440,99 @@
         .readability-on .scope-metric-value.scope-editing { border-color: var(--ui-border, var(--accent)); }
         .evidence-item-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
         .evidence-comment-view { margin-top: 8px; white-space: pre-wrap; color: var(--paper); border-left: 3px solid var(--cat-analyst); padding-left: 8px; }
+
+        /* Risk Evaluation Panel */
+        .evidence-eval-panel { margin-top: 12px; padding: 12px; background: var(--retro-0); border: 1px solid var(--outline); border-radius: 6px; }
+        .eval-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .eval-header h4 { margin: 0; font-size: 0.85rem; color: var(--accent); }
+        .eval-toggles { display: flex; gap: 6px; flex-wrap: wrap; }
+        .eval-toggle-btn {
+            padding: 4px 10px; border-radius: 4px; border: 1px solid var(--outline);
+            background: var(--retro-1); color: var(--paper); font-size: 0.75rem;
+            cursor: pointer; transition: all 0.15s ease; font-family: "Space Mono", monospace;
+        }
+        .eval-toggle-btn:hover:not(:disabled) { background: var(--retro-3); border-color: var(--accent); }
+        .eval-toggle-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .eval-toggle-btn.eval-ready { border-color: var(--good); }
+        .eval-toggle-btn.eval-ready::before { content: "✓ "; color: var(--good); }
+        .eval-toggle-btn.eval-active { background: var(--accent); color: var(--retro-black); border-color: var(--accent); }
+        .eval-form-container { display: none; margin-top: 10px; padding: 10px; background: var(--retro-1); border-radius: 4px; }
+        .eval-form-container.eval-visible { display: block; }
+        .eval-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .eval-form-row { display: flex; flex-direction: column; gap: 4px; }
+        .eval-form-row label {
+            font-size: 0.72rem; color: var(--ui-label-fg); text-transform: uppercase;
+            font-weight: 600; letter-spacing: 0.06em;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.82);
+        }
+        .eval-form-row input, .eval-form-row select, .eval-form-row textarea {
+            padding: 7px 10px; border: 1.5px solid var(--ui-field-border); border-radius: 5px;
+            background: var(--ui-field-bg); color: var(--ui-field-fg);
+            font-family: "Space Mono", monospace; font-size: 0.8rem; line-height: 1.35;
+            color-scheme: dark;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.4);
+        }
+        .eval-form-row input::placeholder,
+        .eval-form-row textarea::placeholder {
+            color: var(--ui-field-placeholder);
+            opacity: 1;
+        }
+        .eval-form-row input:focus, .eval-form-row select:focus, .eval-form-row textarea:focus {
+            border-color: var(--accent);
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.35);
+        }
+        .eval-form-row textarea { min-height: 60px; resize: vertical; }
+        .eval-readiness-hint { font-size: 0.7rem; color: var(--ui-field-muted); margin-top: 4px; }
+        .eval-readiness-hint.ready { color: var(--good); }
+        .eval-readiness-hint.incomplete { color: var(--warn); }
+        textarea.eval-techref-json::placeholder {
+            color: var(--ui-field-placeholder);
+            opacity: 1;
+        }
+
+        /* Unified export menu (DIN / 16:9 / HTML / risk JSON) */
+        .export-menu-wrap { position: relative; display: inline-block; z-index: 10001; }
+        .export-menu-dropdown {
+            display: none; position: absolute; left: 0; top: calc(100% + 6px);
+            min-width: 280px; max-width: min(340px, 92vw); max-height: 85vh; overflow-y: auto;
+            background: var(--retro-1); border: 1px solid var(--accent); border-radius: 8px;
+            padding: 10px 12px; box-shadow: 0 8px 28px rgba(0,0,0,0.55);
+            z-index: 100050;
+        }
+        .export-menu-dropdown.export-menu-open { display: block; }
+        .export-menu-check {
+            display: flex; align-items: flex-start; gap: 8px; font-size: 0.72rem; color: var(--cream);
+            line-height: 1.35; margin: 0 0 10px 0; cursor: pointer;
+        }
+        .export-menu-check input { margin-top: 2px; accent-color: var(--accent); flex-shrink: 0; }
+        .export-menu-item {
+            display: block; width: 100%; box-sizing: border-box; text-align: left;
+            margin: 0 0 6px 0; padding: 8px 10px; border-radius: 5px;
+            border: 1px solid var(--outline); background: var(--retro-2); color: var(--paper);
+            font-family: "Space Mono", monospace; font-size: 0.78rem; cursor: pointer;
+        }
+        .export-menu-item:hover { border-color: var(--accent); color: var(--accent); }
+        .export-menu-divider { border: none; border-top: 1px solid var(--outline); margin: 10px 0; }
+        .export-menu-label { font-size: 0.68rem; color: var(--text-muted); margin: 0 0 6px 0; text-transform: uppercase; letter-spacing: 0.04em; }
+        #pdf-export-panel {
+            position: static; display: block; background: transparent; border: none;
+            padding: 0; margin: 0; min-width: 0; box-shadow: none;
+        }
+        #pdf-export-panel h4 { display: none; }
+        .pdf-annex-option { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+        .pdf-annex-option input[type="checkbox"] { accent-color: var(--accent); }
+        .pdf-annex-option label { font-size: 0.74rem; color: var(--paper); cursor: pointer; }
+        .pdf-annex-option label.disabled { opacity: 0.4; cursor: not-allowed; }
+        .pdf-annex-count { font-size: 0.65rem; color: var(--text-muted); margin-left: auto; }
+        #pdf-export-btn {
+            width: 100%; margin-top: 8px; padding: 8px 10px;
+            background: var(--accent); color: var(--retro-black);
+            border: none; border-radius: 4px; cursor: pointer;
+            font-family: "Space Mono", monospace; font-size: 0.78rem; font-weight: bold;
+        }
+        #pdf-export-btn:hover { opacity: 0.9; }
         .evidence-inline-edit {
             display: inline;
             min-width: 60px;
@@ -572,6 +708,15 @@
             color: var(--ui-btn-active-fg);
             border-color: var(--ui-btn-border);
         }
+        .readability-on #unified-theme-selector.report-btn,
+        .readability-on #unified-theme-selector.report-btn:hover {
+            background: var(--ui-field-bg);
+            color: var(--ui-field-fg);
+            border-color: var(--ui-field-border);
+            text-shadow: none;
+            filter: none;
+        }
+        .readability-on #unified-theme-selector.report-btn:hover { filter: brightness(1.07); }
         .readability-on .btn-subtle-remove {
             color: var(--ui-subtle-btn-fg);
             background: var(--ui-subtle-btn-bg);
@@ -630,7 +775,22 @@
         .hero-sloth-block { flex: 1 1 auto; min-height: 200px; display: flex; flex-direction: column; }
         .hero-note-block { flex: 0 0 auto; display: flex; flex-direction: column; }
         .hero-note-label { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--retro-12); margin-bottom: 8px; }
-        .hero-note-input { width: 100%; min-height: 100px; background: var(--retro-0); color: var(--paper); border: 2px solid var(--outline); border-radius: 8px; padding: 12px; font-family: "Space Mono", monospace; font-size: 0.86rem; resize: vertical; }
+        .hero-note-input {
+            width: 100%; min-height: 100px; background: var(--ui-field-bg); color: var(--ui-field-fg);
+            border: 1.5px solid var(--ui-field-border); border-radius: 8px; padding: 12px 14px;
+            font-family: "Space Mono", monospace; font-size: 0.86rem; resize: vertical;
+            color-scheme: dark; box-shadow: inset 0 1px 3px rgba(0,0,0,0.38);
+        }
+        #hero-note-input.analysis-inline-editor {
+            background: var(--ui-field-bg); color: var(--ui-field-fg);
+            border: 1.5px solid var(--ui-field-border); border-style: solid;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.38);
+            color-scheme: dark;
+        }
+        #hero-note-input.analysis-inline-editor:focus {
+            border-color: var(--accent);
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.35), 0 0 0 2px var(--accent);
+        }
         .branding.ascii-editor {
             width: 100%;
             flex: 1;
@@ -851,8 +1011,47 @@
                     </span>
                 </div>
                 <div class="report-actions">
-                    <button type="button" class="report-btn" id="btn-export-html">Export HTML</button>
-                    <button type="button" class="report-btn" id="btn-export-pdf">Export DIN 5008 PDF</button>
+                    <div class="export-menu-wrap">
+                        <button type="button" class="report-btn" id="btn-export-menu" aria-haspopup="true" aria-expanded="false" title="DIN, 16:9, reader A4, HTML, risk JSON">Export ▾</button>
+                        <div id="export-menu-dropdown" class="export-menu-dropdown" role="menu" aria-hidden="true">
+                            <label class="export-menu-check">
+                                <input type="checkbox" id="export-din-visible-only" checked="checked"/>
+                                <span><strong>DIN PDF — visible evidence only:</strong> checked = appendix + risk annexes exclude rows you hid with ×. Unchecked = every evidence block in the file is included.</span>
+                            </label>
+                            <button type="button" class="export-menu-item" id="export-do-din" role="menuitem">DIN A4 (print / Save as PDF)</button>
+                            <button type="button" class="export-menu-item" id="export-do-169" role="menuitem">Slides 16:9 (print / Save as PDF)</button>
+                            <button type="button" class="export-menu-item" id="export-do-reader" role="menuitem">Reader A4 (print / Save as PDF)</button>
+                            <button type="button" class="export-menu-item" id="export-do-html" role="menuitem">Save full HTML</button>
+                            <hr class="export-menu-divider"/>
+                            <p class="export-menu-label">risk_evaluations.json — annexes</p>
+                            <div id="pdf-export-panel">
+                                <h4>Risk export</h4>
+                                <div class="pdf-annex-option">
+                                    <input type="checkbox" id="pdf-include-cvss" checked="checked"/>
+                                    <label for="pdf-include-cvss">CVSS assessments</label>
+                                    <span class="pdf-annex-count" id="pdf-count-cvss">0 entries</span>
+                                </div>
+                                <div class="pdf-annex-option">
+                                    <input type="checkbox" id="pdf-include-iso" checked="checked"/>
+                                    <label for="pdf-include-iso">ISO 27005 risk matrix</label>
+                                    <span class="pdf-annex-count" id="pdf-count-iso">0 entries</span>
+                                </div>
+                                <div class="pdf-annex-option">
+                                    <input type="checkbox" id="pdf-include-bsi" checked="checked"/>
+                                    <label for="pdf-include-bsi">BSI IT-Grundschutz</label>
+                                    <span class="pdf-annex-count" id="pdf-count-bsi">0 entries</span>
+                                </div>
+                                <div class="pdf-annex-option">
+                                    <input type="checkbox" id="pdf-include-nist" checked="checked"/>
+                                    <label for="pdf-include-nist">NIST SP 800-30</label>
+                                    <span class="pdf-annex-count" id="pdf-count-nist">0 entries</span>
+                                </div>
+                                <button type="button" id="pdf-export-btn">Download risk_evaluations.json</button>
+                                <p style="font-size:0.65rem;color:var(--text-muted);margin:6px 0 0 0;">Grayed annexes have no exportable data yet.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="report-btn" id="btn-open-risk-panel" title="Jump to evidence rows and risk forms (CVSS / ISO / BSI / NIST)">Evidence &amp; risk</button>
                 </div>
             </div>
 
@@ -868,19 +1067,19 @@
                     <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;">
                         <label class="hero-note-label">Analyst note</label>
                     </div>
-                    <div id="hero-note-input" class="analysis-inline-editor" contenteditable="true" data-placeholder="Click to add analyst note..." style="text-align: right; min-height: 100px; color: var(--paper); font-size: 0.82rem;"></div>
+                    <div id="hero-note-input" class="analysis-inline-editor" contenteditable="true" data-placeholder="Click to add analyst note..." style="text-align: right; min-height: 100px; font-size: 0.82rem;"></div>
                 </div>
                 <div style="margin-top:10px; border-top: 1px solid var(--outline); padding-top: 8px;">
                     <label class="hero-note-label" style="font-size:0.72rem; opacity:0.7;">DIN 5008 Cover Fields</label>
                     <div style="display:grid; grid-template-columns: auto 1fr; gap: 4px 8px; font-size:0.78rem; margin-top:4px;">
-                        <span style="color:var(--cream);">Organisation:</span>
-                        <div class="inline-cell-editor" contenteditable="true" id="din-org" data-din-field="organisation" data-placeholder="Hochschule / Unternehmen"></div>
-                        <span style="color:var(--cream);">Auftraggeber:</span>
-                        <div class="inline-cell-editor" contenteditable="true" id="din-client" data-din-field="auftraggeber" data-placeholder="Auftraggeber / Labor"></div>
-                        <span style="color:var(--cream);">Prüfer:</span>
-                        <div class="inline-cell-editor" contenteditable="true" id="din-tester" data-din-field="pruefer" data-placeholder="Name / Rolle"></div>
-                        <span style="color:var(--cream);">Vertraulichkeit:</span>
-                        <div class="inline-cell-editor" contenteditable="true" id="din-confidentiality" data-din-field="vertraulichkeit" data-placeholder="Vertraulich / Intern"></div>
+                        <span style="color:var(--cream);">Organization:</span>
+                        <div class="inline-cell-editor" contenteditable="true" id="din-org" data-din-field="organisation" data-placeholder="Company / institution"></div>
+                        <span style="color:var(--cream);">Client:</span>
+                        <div class="inline-cell-editor" contenteditable="true" id="din-client" data-din-field="auftraggeber" data-placeholder="Client / lab"></div>
+                        <span style="color:var(--cream);">Reviewer:</span>
+                        <div class="inline-cell-editor" contenteditable="true" id="din-tester" data-din-field="pruefer" data-placeholder="Name / role"></div>
+                        <span style="color:var(--cream);">Classification:</span>
+                        <div class="inline-cell-editor" contenteditable="true" id="din-confidentiality" data-din-field="vertraulichkeit" data-placeholder="Confidential / internal"></div>
                     </div>
                 </div>
             </div>
@@ -1204,6 +1403,10 @@ service=<xsl:value-of select="$port_result/@service"/> version=<xsl:value-of sel
             <p class="hint-text" style="margin-top: 0; margin-bottom: 8px;">
                 Evidence references use <strong>E1</strong>..<strong>E<xsl:value-of select="$evidence_count"/></strong>. Add these tags in saved notes to create jump links.
             </p>
+            <p class="hint-text" style="margin-bottom: 10px; border-left: 3px solid var(--accent); padding-left: 10px; line-height: 1.5;">
+                <strong>Risk assessment:</strong> Expand evidence rows (E1 …) for <strong>CVSS, ISO 27005, BSI, NIST</strong>.
+                Use <strong>Export ▾</strong> in the overview for DIN PDF, 16:9 slides, reader A4, HTML, and <code>risk_evaluations.json</code> — same flows as <code>pdf_export.py</code> / <code>evidence2html.py</code>. Cover fields and analyst note stay in the overview column.
+            </p>
             <div class="report-actions" style="margin-top: 0; margin-bottom: 8px;">
                 <button type="button" class="report-link-action" id="expand-all-evidence">Expand all evidence</button>
                 <button type="button" class="report-link-action" id="collapse-all-evidence">Collapse all evidence</button>
@@ -1231,6 +1434,164 @@ service=<xsl:value-of select="$port_result/@service"/> version=<xsl:value-of sel
                         <div class="evidence-comment-view" style="margin-top: 8px;">
                             <span style="opacity: 0.7; font-size: 0.75rem;">Comment:</span>
                             <span class="evidence-inline-edit" contenteditable="true" data-evidence-comment-input="{$evid_key}" data-placeholder="Add comment..." data-evidence-key-ref="{$evid_key}"></span>
+                        </div>
+                        <!-- Risk Evaluation Panel -->
+                        <div class="evidence-eval-panel" data-eval-key="{$evid_key}" data-eval-index="{position()}">
+                            <div class="eval-header">
+                                <h4>Risk assessment</h4>
+                                <div class="eval-toggles">
+                                    <button type="button" class="eval-toggle-btn" data-eval-std="cvss" data-eval-key="{$evid_key}">CVSS</button>
+                                    <button type="button" class="eval-toggle-btn" data-eval-std="iso" data-eval-key="{$evid_key}">ISO 27005</button>
+                                    <button type="button" class="eval-toggle-btn" data-eval-std="bsi" data-eval-key="{$evid_key}">BSI</button>
+                                    <button type="button" class="eval-toggle-btn" data-eval-std="nist" data-eval-key="{$evid_key}">NIST</button>
+                                </div>
+                            </div>
+                            <div class="eval-export-row" style="font-size:0.72rem;margin:8px 0;padding:8px;background:var(--retro-1);border-radius:4px;border:1px solid var(--outline);">
+                                <span style="opacity:0.9;margin-right:6px;">Include in export (DIN PDF / JSON):</span>
+                                <label style="margin-right:10px;cursor:pointer;"><input type="checkbox" class="eval-export-cb" data-export-std="cvss" checked="checked"/> CVSS</label>
+                                <label style="margin-right:10px;cursor:pointer;"><input type="checkbox" class="eval-export-cb" data-export-std="iso" checked="checked"/> ISO</label>
+                                <label style="margin-right:10px;cursor:pointer;"><input type="checkbox" class="eval-export-cb" data-export-std="bsi" checked="checked"/> BSI</label>
+                                <label style="margin-right:10px;cursor:pointer;"><input type="checkbox" class="eval-export-cb" data-export-std="nist" checked="checked"/> NIST</label>
+                                <button type="button" class="report-btn eval-suggest-btn" style="margin-left:8px;padding:4px 8px;font-size:0.7rem;" data-eval-suggest="{$evid_key}">Suggest from evidence</button>
+                                <span class="hint-text" style="margin-left:6px;font-size:0.68rem;">CVE: regex on raw text. In the <strong>CVSS</strong> tab use <strong>Fetch CVSS from NVD</strong> (browser), or <code style="font-size:0.62rem;">python3 vuln_ref_lookup.py … --json</code> for NVD+EPSS+KEV.</span>
+                            </div>
+                            <p class="eval-auto-trace hint-text" style="font-size:0.66rem;opacity:0.82;margin:6px 0 0 0;line-height:1.35;display:none;border-left:2px solid var(--accent);padding-left:8px;"> </p>
+                            <div class="eval-form-container" data-eval-form="{$evid_key}">
+                                <!-- CVSS Form -->
+                                <div class="eval-std-form" data-std-form="cvss" style="display:none;">
+                                    <div class="eval-form-grid">
+                                        <div class="eval-form-row">
+                                            <label>CVSS vector (v3.1)</label>
+                                            <input type="text" data-eval-field="cvss.vector" placeholder="CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"/>
+                                        </div>
+                                        <div class="eval-form-row">
+                                            <label>Base score (manual)</label>
+                                            <input type="number" data-eval-field="cvss.baseScore" min="0" max="10" step="0.1" placeholder="0.0 - 10.0"/>
+                                        </div>
+                                    </div>
+                                    <p class="eval-readiness-hint" data-readiness="cvss">Enter vector or base score</p>
+                                    <div class="eval-techref-block" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--outline);">
+                                        <label style="font-size:0.78rem;display:block;margin-bottom:4px;">Technical reference (JSON)</label>
+                                        <p class="hint-text" style="margin:0 0 6px 0;font-size:0.66rem;line-height:1.4;">NVD CVSS, <strong>EPSS</strong> (FIRST), <strong>CISA KEV</strong> — technical context only. <strong>ISO / BSI / NIST</strong> = organizational risk (separate).</p>
+                                        <div class="eval-nvd-fetch-row" style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 10px 0;">
+                                            <span style="font-size:0.72rem;color:var(--cream);">NVD (browser)</span>
+                                            <input type="text" class="eval-nvd-cve-input" inputmode="text" autocomplete="off" spellcheck="false" placeholder="CVE-YYYY-NNNNN" style="flex:1;min-width:160px;max-width:280px;box-sizing:border-box;font-family:monospace;font-size:0.72rem;background:var(--ui-field-bg);color:var(--ui-field-fg);border:1.5px solid var(--ui-field-border);border-radius:5px;padding:6px 8px;color-scheme:dark;"/>
+                                            <button type="button" class="report-btn eval-nvd-fetch-btn" style="padding:4px 10px;font-size:0.72rem;">Fetch CVSS from NVD</button>
+                                        </div>
+                                        <p class="hint-text" style="margin:0 0 8px 0;font-size:0.62rem;line-height:1.35;">No API key (NIST public rate limits apply). EPSS and CISA KEV: use <code style="font-size:0.6rem;">python3 vuln_ref_lookup.py … --json</code> and paste below.</p>
+                                        <textarea class="eval-techref-json" rows="5" style="width:100%;box-sizing:border-box;font-family:monospace;font-size:0.72rem;background:var(--ui-field-bg);color:var(--ui-field-fg);border:1.5px solid var(--ui-field-border);border-radius:5px;padding:8px 10px;color-scheme:dark;box-shadow:inset 0 1px 3px rgba(0,0,0,0.38);" placeholder="Paste output of: python3 vuln_ref_lookup.py CVE-… --json"></textarea>
+                                        <button type="button" class="report-btn eval-techref-btn" style="margin-top:6px;padding:4px 10px;font-size:0.72rem;">Apply JSON to CVSS + technical ref</button>
+                                        <p class="eval-techref-status hint-text" style="margin:6px 0 0 0;font-size:0.66rem;opacity:0.9;"></p>
+                                    </div>
+                                </div>
+                                <!-- ISO 27005 Form -->
+                                <div class="eval-std-form" data-std-form="iso" style="display:none;">
+                                    <div class="eval-form-grid">
+                                        <div class="eval-form-row">
+                                            <label>Likelihood (1–5)</label>
+                                            <select data-eval-field="iso27005.likelihood">
+                                                <option value="">-- Select --</option>
+                                                <option value="1">1 — Very rare</option>
+                                                <option value="2">2 — Unlikely</option>
+                                                <option value="3">3 — Possible</option>
+                                                <option value="4">4 — Likely</option>
+                                                <option value="5">5 — Almost certain</option>
+                                            </select>
+                                        </div>
+                                        <div class="eval-form-row">
+                                            <label>Impact (1–5)</label>
+                                            <select data-eval-field="iso27005.impact">
+                                                <option value="">-- Select --</option>
+                                                <option value="1">1 — Negligible</option>
+                                                <option value="2">2 — Minor</option>
+                                                <option value="3">3 — Moderate</option>
+                                                <option value="4">4 — Major</option>
+                                                <option value="5">5 — Catastrophic</option>
+                                            </select>
+                                        </div>
+                                        <div class="eval-form-row">
+                                            <label>Treatment (ISO 27005)</label>
+                                            <select data-eval-field="iso27005.treatment">
+                                                <option value="">-- Select --</option>
+                                                <option value="Vermeiden">Vermeiden</option>
+                                                <option value="Mindern">Mindern</option>
+                                                <option value="Übertragen">Übertragen</option>
+                                                <option value="Akzeptieren">Akzeptieren</option>
+                                            </select>
+                                        </div>
+                                        <div class="eval-form-row">
+                                            <label>Residual risk</label>
+                                            <input type="text" data-eval-field="iso27005.residualRisk" placeholder="e.g. low"/>
+                                        </div>
+                                    </div>
+                                    <p class="eval-readiness-hint" data-readiness="iso">Likelihood and impact required</p>
+                                </div>
+                                <!-- BSI Form -->
+                                <div class="eval-std-form" data-std-form="bsi" style="display:none;">
+                                    <div class="eval-form-grid">
+                                        <div class="eval-form-row">
+                                            <label>IT-Grundschutz Baustein</label>
+                                            <input type="text" data-eval-field="bsi.module" placeholder="e.g. SYS.1.1, APP.1.1"/>
+                                        </div>
+                                        <div class="eval-form-row">
+                                            <label>Schutzbedarf (BSI)</label>
+                                            <select data-eval-field="bsi.protectionNeed">
+                                                <option value="">-- Select --</option>
+                                                <option value="Normal">Normal</option>
+                                                <option value="Hoch">Hoch</option>
+                                                <option value="Sehr hoch">Sehr hoch</option>
+                                            </select>
+                                        </div>
+                                        <div class="eval-form-row">
+                                            <label>Maßnahmenstatus (BSI)</label>
+                                            <select data-eval-field="bsi.measureStatus">
+                                                <option value="">-- Select --</option>
+                                                <option value="Erfüllt">Erfüllt</option>
+                                                <option value="Teilweise">Teilweise</option>
+                                                <option value="Nicht erfüllt">Nicht erfüllt</option>
+                                                <option value="Entbehrlich">Entbehrlich</option>
+                                            </select>
+                                        </div>
+                                        <div class="eval-form-row" style="grid-column: 1 / -1;">
+                                            <label>Gap / risk analysis (BSI 200-3)</label>
+                                            <textarea data-eval-field="bsi.gap" placeholder="Describe the gap or deviation…"></textarea>
+                                        </div>
+                                    </div>
+                                    <p class="eval-readiness-hint" data-readiness="bsi">Schutzbedarf and Maßnahmenstatus required</p>
+                                </div>
+                                <!-- NIST Form -->
+                                <div class="eval-std-form" data-std-form="nist" style="display:none;">
+                                    <div class="eval-form-grid">
+                                        <div class="eval-form-row">
+                                            <label>Likelihood (SP 800-30)</label>
+                                            <select data-eval-field="nist.likelihood">
+                                                <option value="">-- Select --</option>
+                                                <option value="Very Low">Very Low (~0-10%)</option>
+                                                <option value="Low">Low (~10-25%)</option>
+                                                <option value="Moderate">Moderate (~25-50%)</option>
+                                                <option value="High">High (~50-75%)</option>
+                                                <option value="Very High">Very High (~75-100%)</option>
+                                            </select>
+                                        </div>
+                                        <div class="eval-form-row">
+                                            <label>Impact</label>
+                                            <select data-eval-field="nist.impact">
+                                                <option value="">-- Select --</option>
+                                                <option value="Very Low">Very Low</option>
+                                                <option value="Low">Low</option>
+                                                <option value="Moderate">Moderate</option>
+                                                <option value="High">High</option>
+                                                <option value="Very High">Very High</option>
+                                            </select>
+                                        </div>
+                                        <div class="eval-form-row">
+                                            <label>CSF Subcategory (optional)</label>
+                                            <input type="text" data-eval-field="nist.csfSubcategory" placeholder="e.g. DE.CM-1, PR.AC-1"/>
+                                        </div>
+                                    </div>
+                                    <p class="eval-readiness-hint" data-readiness="nist">Likelihood and impact required</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </details>
@@ -1298,6 +1659,9 @@ service=<xsl:value-of select="$port_result/@service"/> version=<xsl:value-of sel
         <p style="margin:0.6rem 0 0 0; opacity:0.9;">Use only on systems you are authorized to test. Unauthorized scanning or access is illegal.</p>
     </footer>
 </div>
+
+<!-- Hidden store for risk evaluations (used by PDF export) -->
+<div id="cosmic-eval-export" aria-hidden="true" style="display:none!important;"></div>
 
 <div id="ascii-art-store" style="display:none;">
     <xsl:for-each select="/nmaprun/cosmicascii/art">
@@ -1771,23 +2135,154 @@ service=<xsl:value-of select="$port_result/@service"/> version=<xsl:value-of sel
         if (toggleBtn) toggleBtn.style.display = "none";
         applyMode();
     })();
+
+    /* DIN / PDF: preserve line breaks, alignment, bold/italic from contenteditable (sanitized). */
+    var DIN_DANGEROUS_TAGS = { SCRIPT: 1, STYLE: 1, IFRAME: 1, OBJECT: 1, EMBED: 1, LINK: 1, META: 1, BASE: 1, FORM: 1, INPUT: 1, BUTTON: 1, SVG: 1, MATH: 1, A: 1 };
+    var DIN_ALLOWED_TAGS = { BR: 1, P: 1, DIV: 1, SPAN: 1, B: 1, STRONG: 1, I: 1, EM: 1, U: 1, UL: 1, OL: 1, LI: 1, H2: 1, H3: 1, H4: 1, FONT: 1, S: 1, STRIKE: 1 };
+
+    function dinSanitizeStyleValue(val) {
+        if (!val || /url\s*\(|expression\s*\(|@import|javascript:/i.test(val)) return "";
+        return val.trim();
+    }
+    function dinCleanStyleAttr(style) {
+        if (!style) return "";
+        var out = [];
+        style.split(";").forEach(function (part) {
+            var m = part.match(/^\s*([a-zA-Z-]+)\s*:\s*(.+)$/);
+            if (!m) return;
+            var prop = m[1].trim().toLowerCase();
+            var val = dinSanitizeStyleValue(m[2]);
+            if (!val) return;
+            if (prop === "text-align" && /^(left|right|center|justify)$/i.test(val)) out.push("text-align:" + val.toLowerCase());
+            else if (prop === "font-weight" && /^(bold|normal|bolder|lighter|\d{3})$/i.test(val)) out.push("font-weight:" + val);
+            else if (prop === "font-style" && /^(italic|normal|oblique)$/i.test(val)) out.push("font-style:" + val);
+            else if (prop === "text-decoration" && /^(underline|none|line-through|overline)$/i.test(val)) out.push("text-decoration:" + val);
+            else if (prop === "margin" || prop === "margin-left" || prop === "margin-right" || prop === "padding-left") {
+                if (/^[\d.\sptem%px-]+$/i.test(val)) out.push(prop + ":" + val);
+            }
+        });
+        return out.join(";");
+    }
+    function dinCleanElementAttrs(el, tag) {
+        var attrs = Array.prototype.slice.call(el.attributes);
+        attrs.forEach(function (a) {
+            var n = a.name.toLowerCase();
+            if (n.indexOf("on") === 0) { el.removeAttribute(a.name); return; }
+            if (n === "href" || n === "src" || n === "formaction" || n === "xlink:href" || n === "cite") { el.removeAttribute(a.name); return; }
+            if (n === "id" || n === "class" || n === "name") { el.removeAttribute(a.name); return; }
+            if (n === "style") {
+                var s = dinCleanStyleAttr(el.getAttribute("style"));
+                if (s) el.setAttribute("style", s); else el.removeAttribute("style");
+            } else if (tag === "FONT" && n === "color") {
+                var c = (el.getAttribute("color") || "").trim();
+                if (!/^#[0-9A-Fa-f]{3,8}$/.test(c) && !/^[a-z]{2,20}$/i.test(c)) el.removeAttribute("color");
+            } else {
+                el.removeAttribute(a.name);
+            }
+        });
+    }
+    function dinSanitizeDomNode(node) {
+        if (!node) return;
+        var ch = node.firstChild;
+        while (ch) {
+            var next = ch.nextSibling;
+            if (ch.nodeType === 8) {
+                node.removeChild(ch);
+            } else if (ch.nodeType === 1) {
+                var tag = ch.tagName.toUpperCase();
+                if (DIN_DANGEROUS_TAGS[tag]) {
+                    node.removeChild(ch);
+                } else if (!DIN_ALLOWED_TAGS[tag]) {
+                    dinSanitizeDomNode(ch);
+                    while (ch.firstChild) node.insertBefore(ch.firstChild, ch);
+                    node.removeChild(ch);
+                } else {
+                    dinCleanElementAttrs(ch, tag);
+                    dinSanitizeDomNode(ch);
+                }
+            }
+            ch = next;
+        }
+    }
+    function sanitizeEditorHtmlFromElement(el) {
+        if (!el) return "";
+        var html = (el.innerHTML || "").trim();
+        if (!html) return "";
+        var plain = (el.innerText || el.textContent || "").replace(/\s+/g, " ").trim();
+        if (!plain) return "";
+        try {
+            var tpl = document.createElement("template");
+            tpl.innerHTML = "<div class=\"din-sanitize-root\">" + html + "</div>";
+            var wrap = tpl.content.firstChild;
+            dinSanitizeDomNode(wrap);
+            var inner = (wrap.innerHTML || "").trim();
+            return inner || "";
+        } catch (e0) {
+            return "";
+        }
+    }
+    function dinPlainTextToHtml(value) {
+        var t = (value || "").replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+        return htmlEscape(t).replace(/\n/g, "<br>");
+    }
+    function dinRichOrPlain(el, plainFallback) {
+        var rich = sanitizeEditorHtmlFromElement(el);
+        if (rich) return rich;
+        if (plainFallback && String(plainFallback).trim()) return dinPlainTextToHtml(plainFallback);
+        return "";
+    }
+    function dinLooksLikeHtml(s) {
+        return typeof s === "string" && /<[a-z][\s\S]*>/i.test(s);
+    }
+    function dinApplyStoredHtml(el, stored) {
+        if (!el) return;
+        if (stored == null || stored === "") {
+            el.textContent = "";
+            return;
+        }
+        if (dinLooksLikeHtml(stored)) el.innerHTML = stored;
+        else el.textContent = stored;
+    }
+
     (function heroNote() {
         var key = "cosmicAnal:v1:heroNote";
         var input = document.getElementById("hero-note-input");
         if (!input) return;
         try {
             var saved = localStorage.getItem(key);
-            if (saved) input.textContent = saved;
+            if (saved) dinApplyStoredHtml(input, saved);
         } catch (e) {}
         function saveHeroNote() {
             try {
                 var val = ((input.innerText || input.textContent || "") + "").trim();
-                if (val) localStorage.setItem(key, val);
-                else localStorage.removeItem(key);
+                if (!val) { localStorage.removeItem(key); return; }
+                var html = sanitizeEditorHtmlFromElement(input);
+                localStorage.setItem(key, html || val);
             } catch (e) {}
         }
         input.addEventListener("input", saveHeroNote);
         input.addEventListener("blur", saveHeroNote);
+    })();
+    (function dinCoverFieldsPersistence() {
+        document.querySelectorAll("[data-din-field]").forEach(function (el) {
+            var f = el.getAttribute("data-din-field");
+            if (!f) return;
+            var key = "cosmicAnal:v1:din:" + f;
+            try {
+                var saved = localStorage.getItem(key);
+                if (saved !== null) dinApplyStoredHtml(el, saved);
+            } catch (e1) {}
+            function saveDin() {
+                try {
+                    var val = stripWhitespace(textContentSafe(el));
+                    if (!val) { localStorage.removeItem(key); return; }
+                    var html = sanitizeEditorHtmlFromElement(el);
+                    localStorage.setItem(key, html || val);
+                } catch (e2) {}
+            }
+            el.addEventListener("input", saveDin);
+            el.addEventListener("blur", saveDin);
+        });
     })();
     function textContentSafe(el) {
         if (!el) return "";
@@ -1795,6 +2290,16 @@ service=<xsl:value-of select="$port_result/@service"/> version=<xsl:value-of sel
     }
     function htmlEscape(value) {
         return ("" + (value || "")).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    }
+    /** Collapse &amp;amp;… chains produced by double-saving HTML (e.g. R&amp;amp;E → R&amp;E). */
+    function dinFlattenHtmlAmpEscapes(html) {
+        if (!html || typeof html !== "string") return html;
+        var t = html, prev = "";
+        for (var i = 0; i < 10 && t !== prev; i++) {
+            prev = t;
+            t = t.replace(/&amp;amp;/g, "&amp;");
+        }
+        return t;
     }
     function stripWhitespace(value) {
         return ("" + (value || "")).replace(/\s+/g, " ").trim();
@@ -1804,17 +2309,156 @@ service=<xsl:value-of select="$port_result/@service"/> version=<xsl:value-of sel
         if (safe.length <= maxLen) return safe;
         return safe.substr(0, maxLen) + "…";
     }
+
+    /* Risk evaluations (localStorage) — same prefix as riskEvaluationModule */
+    var COSMIC_EVAL_PREFIX = "cosmicEval:v1:";
+    function readEvalRiskStore(key) {
+        try {
+            var raw = localStorage.getItem(COSMIC_EVAL_PREFIX + key);
+            if (!raw) return {};
+            return JSON.parse(raw);
+        } catch (e) { return {}; }
+    }
+    function collectRiskEvalRowsForDin(onlyVisibleEvidence) {
+        var rows = [];
+        document.querySelectorAll(".evidence-eval-panel").forEach(function (panel) {
+            if (onlyVisibleEvidence) {
+                var det = panel.closest("details.evidence-block");
+                if (det && det.classList.contains("evidence-user-hidden")) return;
+            }
+            var key = panel.getAttribute("data-eval-key");
+            var idx = panel.getAttribute("data-eval-index");
+            var data = readEvalRiskStore(key);
+            data.key = key;
+            data.evidenceIndex = idx;
+            data.eid = "E" + idx;
+            rows.push(data);
+        });
+        return rows;
+    }
+    function riskHasCvss(ev) {
+        var cv = ev.cvss || {};
+        return !!(cv.vector && String(cv.vector).trim()) || (cv.baseScore != null && cv.baseScore !== "");
+    }
+    function riskHasIso(ev) {
+        var iso = ev.iso27005 || {};
+        return !!iso.likelihood && !!iso.impact;
+    }
+    function riskHasBsi(ev) {
+        var b = ev.bsi || {};
+        return !!b.protectionNeed;
+    }
+    function riskHasNist(ev) {
+        var n = ev.nist || {};
+        return !!n.likelihood && !!n.impact;
+    }
+    function rowExportsAnnex(r, std) {
+        var inc = r.exportInclude || {};
+        return inc[std] !== false;
+    }
+    function cvssDisplayScore(ev) {
+        var cv = ev.cvss || {};
+        if (cv.baseScore != null && cv.baseScore !== "") return String(cv.baseScore);
+        return "—";
+    }
+    function buildRiskAnnexHtmlForDinPrint(rows, flags) {
+        var parts = [];
+        if (flags.cvss) {
+            var cr = rows.filter(riskHasCvss).filter(function (r) { return rowExportsAnnex(r, "cvss"); });
+            if (cr.length) {
+                parts.push("<div style=\"page-break-before:always;\"><h2>Annex: CVSS assessments</h2>");
+                parts.push("<table><tr><th>Ref</th><th>Score</th><th>Vector (excerpt)</th></tr>");
+                cr.forEach(function (r) {
+                    var cv = r.cvss || {};
+                    parts.push("<tr><td><strong>" + htmlEscape(r.eid) + "</strong></td><td>" + htmlEscape(cvssDisplayScore(r)) + "</td><td style=\"font-family:monospace;font-size:8pt;\">" + htmlEscape(truncate(cv.vector || "", 100)) + "</td></tr>");
+                });
+                parts.push("</table></div>");
+            }
+        }
+        if (flags.iso) {
+            var ir = rows.filter(riskHasIso).filter(function (r) { return rowExportsAnnex(r, "iso"); });
+            if (ir.length) {
+                parts.push("<div style=\"page-break-before:always;\"><h2>Annex: ISO 27005 (risk)</h2>");
+                parts.push("<table><tr><th>Ref</th><th>Likelihood</th><th>Impact</th><th>Treatment</th></tr>");
+                ir.forEach(function (r) {
+                    var iso = r.iso27005 || {};
+                    parts.push("<tr><td><strong>" + htmlEscape(r.eid) + "</strong></td><td>" + htmlEscape(String(iso.likelihood)) + "</td><td>" + htmlEscape(String(iso.impact)) + "</td><td>" + htmlEscape(iso.treatment || "") + "</td></tr>");
+                });
+                parts.push("</table></div>");
+            }
+        }
+        if (flags.bsi) {
+            var br = rows.filter(riskHasBsi).filter(function (r) { return rowExportsAnnex(r, "bsi"); });
+            if (br.length) {
+                parts.push("<div style=\"page-break-before:always;\"><h2>Annex: BSI IT-Grundschutz</h2>");
+                parts.push("<table><tr><th>Ref</th><th>Baustein</th><th>Schutzbedarf</th><th>Maßnahmenstatus</th><th>Gap</th></tr>");
+                br.forEach(function (r) {
+                    var b = r.bsi || {};
+                    parts.push("<tr><td><strong>" + htmlEscape(r.eid) + "</strong></td><td>" + htmlEscape(b.module || "") + "</td><td>" + htmlEscape(b.protectionNeed || "") + "</td><td>" + htmlEscape(b.measureStatus || "") + "</td><td>" + htmlEscape(truncate(b.gap || "", 200)) + "</td></tr>");
+                });
+                parts.push("</table></div>");
+            }
+        }
+        if (flags.nist) {
+            var nr = rows.filter(riskHasNist).filter(function (r) { return rowExportsAnnex(r, "nist"); });
+            if (nr.length) {
+                parts.push("<div style=\"page-break-before:always;\"><h2>Annex: NIST SP 800-30</h2>");
+                parts.push("<table><tr><th>Ref</th><th>Likelihood</th><th>Impact</th><th>CSF</th></tr>");
+                nr.forEach(function (r) {
+                    var n = r.nist || {};
+                    parts.push("<tr><td><strong>" + htmlEscape(r.eid) + "</strong></td><td>" + htmlEscape(n.likelihood || "") + "</td><td>" + htmlEscape(n.impact || "") + "</td><td>" + htmlEscape(n.csfSubcategory || "") + "</td></tr>");
+                });
+                parts.push("</table></div>");
+            }
+        }
+        return parts.join("");
+    }
+    /** Short counts for the DIN executive summary (annex detail stays at end of document). */
+    function executiveRiskSummaryParagraph(rows, flags) {
+        if (!rows.length) return "";
+        var bits = [];
+        if (flags.cvss) {
+            var nc = rows.filter(riskHasCvss).filter(function (r) { return rowExportsAnnex(r, "cvss"); }).length;
+            if (nc) bits.push("CVSS technical reference: " + nc + " evidence item(s)");
+        }
+        if (flags.iso) {
+            var ni = rows.filter(riskHasIso).filter(function (r) { return rowExportsAnnex(r, "iso"); }).length;
+            if (ni) bits.push("ISO 27005: " + ni);
+        }
+        if (flags.bsi) {
+            var nb = rows.filter(riskHasBsi).filter(function (r) { return rowExportsAnnex(r, "bsi"); }).length;
+            if (nb) bits.push("BSI IT-Grundschutz: " + nb);
+        }
+        if (flags.nist) {
+            var nn = rows.filter(riskHasNist).filter(function (r) { return rowExportsAnnex(r, "nist"); }).length;
+            if (nn) bits.push("NIST SP 800-30: " + nn);
+        }
+        if (!bits.length) return "";
+        return "<p style=\"margin-top:10pt;\"><strong>Risk assessment summary:</strong> "
+            + htmlEscape(bits.join("; "))
+            + ". Detailed tables and figures are in the annexes at the end of this document.</p>";
+    }
     function gatherScopeMetrics() {
         var scope = {};
         document.querySelectorAll(".scope-metric-value[data-scope-key]").forEach(function (el) {
             scope[el.getAttribute("data-scope-key")] = stripWhitespace(textContentSafe(el));
         });
         var heroNote = document.getElementById("hero-note-input");
-        if (heroNote) scope.hero_note = stripWhitespace(textContentSafe(heroNote));
+        if (heroNote) {
+            var hnPlain = stripWhitespace(textContentSafe(heroNote));
+            if (hnPlain) {
+                scope.hero_note = hnPlain;
+                scope.hero_note_html = dinFlattenHtmlAmpEscapes(dinRichOrPlain(heroNote, hnPlain));
+            }
+        }
         document.querySelectorAll("[data-din-field]").forEach(function (el) {
             var k = el.getAttribute("data-din-field");
             var v = stripWhitespace(textContentSafe(el));
-            if (v) scope["din_" + k] = v;
+            if (v) {
+                scope["din_" + k] = v;
+                var rh = dinRichOrPlain(el, v);
+                if (rh) scope["din_" + k + "_html"] = dinFlattenHtmlAmpEscapes(rh);
+            }
         });
         return scope;
     }
@@ -1833,10 +2477,16 @@ service=<xsl:value-of select="$port_result/@service"/> version=<xsl:value-of sel
             var service = stripWhitespace(tb.getAttribute("data-service") || textContentSafe(first.querySelector("td:nth-child(3)")));
             var version = textContentSafe(first.querySelector("td:nth-child(4)"));
             var product = textContentSafe(first.querySelector("td:nth-child(5)"));
-            var extra = textContentSafe(first.querySelector("[data-port-extra-input]"));
+            var extraEl = first.querySelector("[data-port-extra-input]");
+            var extra = extraEl ? stripWhitespace(textContentSafe(extraEl)) : "";
+            var extraHtml = extraEl && extra ? dinRichOrPlain(extraEl, extra) : "";
             var analystNote = "";
+            var analystNoteHtml = "";
             var analystInput = tb.querySelector("[data-analysis-input]");
-            if (analystInput) analystNote = stripWhitespace(textContentSafe(analystInput));
+            if (analystInput) {
+                analystNote = stripWhitespace(textContentSafe(analystInput));
+                if (analystNote) analystNoteHtml = dinRichOrPlain(analystInput, analystNote);
+            }
             var noteRows = [];
             tb.querySelectorAll("tr.port-subrow").forEach(function (sr) {
                 var title = textContentSafe(sr.querySelector(".subline-title"));
@@ -1865,31 +2515,44 @@ service=<xsl:value-of select="$port_result/@service"/> version=<xsl:value-of sel
                 version: version,
                 product: product,
                 extra: extra,
+                extraHtml: extraHtml,
                 analystNote: analystNote,
+                analystNoteHtml: analystNoteHtml,
                 notes: noteRows
             });
         });
         return { rows: rows, summary: summary };
     }
-    function gatherEvidenceRows() {
+    function gatherEvidenceRows(onlyVisibleEvidence) {
         var rows = [];
         var index = 1;
         document.querySelectorAll("details[data-evidence-key][data-evidence-index]").forEach(function (node) {
+            if (onlyVisibleEvidence && node.classList.contains("evidence-user-hidden")) return;
             var head = node.querySelector(".evidence-item-head");
             var statusTxt = "OK";
             if (head) statusTxt = stripWhitespace(textContentSafe(head)).replace(/^.*Status:\s*/i, "").split("|")[0].trim() || "OK";
+            var titleEl = node.querySelector("[data-evidence-title-input]");
+            var sumEl = node.querySelector("[data-evidence-summary-input]");
+            var rawEl = node.querySelector("[data-evidence-raw-input]");
+            var comEl = node.querySelector("[data-evidence-comment-input]");
+            var titlePlain = titleEl ? stripWhitespace(textContentSafe(titleEl)) : "";
+            var sumPlain = sumEl ? stripWhitespace(textContentSafe(sumEl)) : "";
+            var comPlain = comEl ? stripWhitespace(textContentSafe(comEl)) : "";
             rows.push({
                 index: index++,
                 key: node.getAttribute("data-evidence-key") || "",
-                title: node.querySelector("[data-evidence-title-input]") ? stripWhitespace(textContentSafe(node.querySelector("[data-evidence-title-input]"))) : "",
+                title: titlePlain,
+                titleHtml: titleEl && titlePlain ? dinRichOrPlain(titleEl, titlePlain) : "",
                 file: node.getAttribute("data-evidence-key") ? node.getAttribute("data-evidence-key").split("|")[0] : "",
                 tool: node.getAttribute("data-evidence-tool") || "",
                 timestamp: node.getAttribute("data-evidence-timestamp") || "",
                 category: textContentSafe(node.querySelector("summary .badge.proto-tcp")),
                 status: statusTxt,
-                summary: node.querySelector("[data-evidence-summary-input]") ? stripWhitespace(textContentSafe(node.querySelector("[data-evidence-summary-input]"))) : "",
-                raw: node.querySelector("[data-evidence-raw-input]") ? stripWhitespace(textContentSafe(node.querySelector("[data-evidence-raw-input]"))) : "",
-                comment: node.querySelector("[data-evidence-comment-input]") ? stripWhitespace(textContentSafe(node.querySelector("[data-evidence-comment-input]"))) : ""
+                summary: sumPlain,
+                summaryHtml: sumEl && sumPlain ? dinRichOrPlain(sumEl, sumPlain) : "",
+                raw: rawEl ? stripWhitespace(textContentSafe(rawEl)) : "",
+                comment: comPlain,
+                commentHtml: comEl && comPlain ? dinRichOrPlain(comEl, comPlain) : ""
             });
         });
         return rows;
@@ -1904,13 +2567,22 @@ service=<xsl:value-of select="$port_result/@service"/> version=<xsl:value-of sel
                 if (!stored) return;
                 var data = JSON.parse(stored);
                 var t = node.querySelector('[data-evidence-title-input="' + key + '"]');
-                if (t && data.title) t.textContent = data.title;
+                if (t) {
+                    if (data.titleHtml) t.innerHTML = data.titleHtml;
+                    else if (data.title) t.textContent = data.title;
+                }
                 var s = node.querySelector('[data-evidence-summary-input="' + key + '"]');
-                if (s && data.summary) s.textContent = data.summary;
+                if (s) {
+                    if (data.summaryHtml) s.innerHTML = data.summaryHtml;
+                    else if (data.summary) s.textContent = data.summary;
+                }
                 var r = node.querySelector('[data-evidence-raw-input="' + key + '"]');
                 if (r && data.raw) r.textContent = data.raw;
                 var c = node.querySelector('[data-evidence-comment-input="' + key + '"]');
-                if (c && data.comment) c.textContent = data.comment;
+                if (c) {
+                    if (data.commentHtml) c.innerHTML = data.commentHtml;
+                    else if (data.comment) c.textContent = data.comment;
+                }
             } catch (err) {}
         });
         document.querySelectorAll("[data-analysis-input]").forEach(function (input) {
@@ -1927,21 +2599,21 @@ service=<xsl:value-of select="$port_result/@service"/> version=<xsl:value-of sel
             var k = el.getAttribute("data-port-extra-input");
             try {
                 var sv = localStorage.getItem("cosmicAnal:v1:portExtra:" + k);
-                if (sv !== null) el.textContent = sv;
+                if (sv !== null) dinApplyStoredHtml(el, sv);
             } catch (e3) {}
         });
         document.querySelectorAll("[data-cmd-note]").forEach(function (el) {
             var k = el.getAttribute("data-cmd-note");
             try {
                 var sv = localStorage.getItem("cosmicAnal:v1:cmdNote:" + k);
-                if (sv !== null) el.textContent = sv;
+                if (sv !== null) dinApplyStoredHtml(el, sv);
             } catch (e4) {}
         });
         document.querySelectorAll("[data-cmd-extra]").forEach(function (el) {
             var k = el.getAttribute("data-cmd-extra");
             try {
                 var sv = localStorage.getItem("cosmicAnal:v1:cmdExtra:" + k);
-                if (sv !== null) el.textContent = sv;
+                if (sv !== null) dinApplyStoredHtml(el, sv);
             } catch (e5) {}
         });
         document.querySelectorAll(".scope-metric-value[data-scope-key]").forEach(function (node) {
@@ -1956,9 +2628,31 @@ service=<xsl:value-of select="$port_result/@service"/> version=<xsl:value-of sel
         if (hero) {
             try {
                 var hn = localStorage.getItem("cosmicAnal:v1:heroNote");
-                if (hn) hero.textContent = hn;
+                if (hn) dinApplyStoredHtml(hero, hn);
             } catch (e7) {}
         }
+        document.querySelectorAll("[data-din-field]").forEach(function (el) {
+            var f = el.getAttribute("data-din-field");
+            if (!f) return;
+            try {
+                var dv = localStorage.getItem("cosmicAnal:v1:din:" + f);
+                if (dv !== null) dinApplyStoredHtml(el, dv);
+            } catch (e8) {}
+        });
+        (function syncEvidenceHiddenClassFromStorage() {
+            var list = document.getElementById("evidence-list");
+            if (!list) return;
+            var hidden = [];
+            try {
+                hidden = JSON.parse(localStorage.getItem("cosmicAnal:v1:hiddenEvidenceKeys") || "[]");
+            } catch (eH) {}
+            if (!Array.isArray(hidden)) hidden = [];
+            list.querySelectorAll("details[data-evidence-key]").forEach(function (d) {
+                var k = d.getAttribute("data-evidence-key");
+                if (k && hidden.indexOf(k) >= 0) d.classList.add("evidence-user-hidden");
+                else d.classList.remove("evidence-user-hidden");
+            });
+        })();
     }
     function typeLabel(s) {
         if (!s) return "";
@@ -2044,12 +2738,28 @@ service=<xsl:value-of select="$port_result/@service"/> version=<xsl:value-of sel
         var u = (sev || "?").toUpperCase();
         return "<span style=\"background:" + bg + ";color:#fff;padding:2px 8px;border-radius:3px;font-size:10pt;font-weight:bold;letter-spacing:1px;\">" + htmlEscape(u) + "</span>";
     }
-    function buildDin5008PythonAlignedHtml() {
+    function dinOnlyVisibleFromExportCheckbox() {
+        var cb = document.getElementById("export-din-visible-only");
+        return !!(cb && cb.checked);
+    }
+    function buildDin5008PythonAlignedHtml(opts) {
+        var opt = opts || {};
+        var onlyVisibleEvidence = opt.onlyVisibleEvidence === true;
         var scope = gatherScopeMetrics();
         var meta = readDinMetaSummary();
         var portData = gatherPortRows();
-        var evidence = gatherEvidenceRows();
-        var findings = gatherFindingsFromDom();
+        var evidence = gatherEvidenceRows(onlyVisibleEvidence);
+        var findingsAll = gatherFindingsFromDom();
+        function isFfufWebDiscoveryNoiseFinding(f) {
+            var typ = (f.type || "").toLowerCase().replace(/\s+/g, "_");
+            var tool = (f.tool || "").toLowerCase();
+            return typ === "web_discovery" && tool.indexOf("ffuf") >= 0;
+        }
+        var findingsFfufNoise = findingsAll.filter(isFfufWebDiscoveryNoiseFinding);
+        var findings = findingsAll.filter(function (f) { return !isFfufWebDiscoveryNoiseFinding(f); });
+        var dinFfufNoiseCount = findingsFfufNoise.length;
+        var DIN_FINDINGS_TOC_COLLAPSE_AT = 32;
+        var DIN_FINDINGS_BODY_MAX = 55;
         var scans = gatherScansFromDom();
         var hosts = groupPortsByHost(portData.rows);
         var generated = new Date().toISOString().slice(0, 16).replace("T", " ");
@@ -2058,9 +2768,31 @@ service=<xsl:value-of select="$port_result/@service"/> version=<xsl:value-of sel
         if (!targetLine && hosts.length) targetLine = hosts.map(function (h) { return h.ip; }).join(", ");
 
         var DIN_CSS = [
-            "@page { size: A4 portrait; margin: 25mm 20mm 20mm 25mm;",
-            "  @top-right { content: \"Confidential\"; font-size: 8pt; color: #888; }",
-            "  @bottom-right { content: \"Page \" counter(page) \" of \" counter(pages); font-size: 8pt; color: #888; }",
+            "@page { size: A4 portrait; margin: 25mm 20mm 22mm 25mm;",
+            "  @top-right {",
+            "    content: \"Confidential\";",
+            "    font-family: \"Helvetica Neue\", Helvetica, Arial, sans-serif;",
+            "    font-size: 8pt;",
+            "    color: rgba(100, 116, 139, 0.88);",
+            "  }",
+            "  @bottom-right {",
+            "    content: counter(page, upper-roman) \" of \" counter(pages, upper-roman);",
+            "    font-family: \"Helvetica Neue\", Helvetica, Arial, sans-serif;",
+            "    font-size: 8pt;",
+            "    font-weight: 500;",
+            "    color: rgba(100, 116, 139, 0.88);",
+            "  }",
+            "}",
+            ".din-browser-print-hint { display: none; }",
+            "@media screen {",
+            "  .din-browser-print-hint {",
+            "    display: block; position: fixed; bottom: 0; left: 0; right: 0; z-index: 99999;",
+            "    padding: 10px 14px; font-family: \"Helvetica Neue\", Helvetica, Arial, sans-serif; font-size: 11px;",
+            "    color: #475569; background: rgba(241, 245, 249, 0.96); border-top: 1px solid #cbd5e1;",
+            "  }",
+            "}",
+            "@media print {",
+            "  .din-browser-print-hint { display: none !important; }",
             "}",
             "* { box-sizing: border-box; }",
             "body { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 10pt; color: #1a1a1a; line-height: 1.5; margin: 0; padding: 0; }",
@@ -2082,7 +2814,14 @@ service=<xsl:value-of select="$port_result/@service"/> version=<xsl:value-of sel
             ".field-value { margin: 0 0 6pt; }",
             "hr { border: none; border-top: 0.5pt solid #ccc; margin: 12pt 0; }",
             ".stat-table td { font-size: 10pt; }",
-            ".stat-table .sev-num { font-weight: bold; font-size: 12pt; }"
+            ".stat-table .sev-num { font-weight: bold; font-size: 12pt; }",
+            ".din-rich, .din-rich-inline { font-size: inherit; line-height: 1.5; word-wrap: break-word; }",
+            ".din-rich p { margin: 4pt 0; }",
+            ".din-rich div { margin: 2pt 0; }",
+            ".din-rich ul, .din-rich ol { margin: 4pt 0; padding-left: 18pt; }",
+            "td.din-rich-td { vertical-align: top; }",
+            ".analyst-note-box .din-rich { font-style: normal; }",
+            ".analyst-note-box .din-rich em, .analyst-note-box .din-rich i { font-style: italic; }"
         ].join("\n");
 
         var parts = [];
@@ -2090,17 +2829,24 @@ service=<xsl:value-of select="$port_result/@service"/> version=<xsl:value-of sel
         parts.push(DIN_CSS);
         parts.push("</style></head><body>");
 
+        parts.push("<div class=\"din-browser-print-hint\">");
+        parts.push("Chrome / Edge: in the print dialog open <strong>More settings</strong> and turn off <strong>Headers and footers</strong> ");
+        parts.push("(otherwise the browser adds title, file path, and duplicate page numbers). ");
+        parts.push("This report uses its own footer (e.g. <strong>I of XVIII</strong>), bottom-right, muted grey.");
+        parts.push("</div>");
+
         parts.push("<div class=\"cover\"><br><br><br><h1>Security Assessment Report</h1><hr><table class=\"stat-table\" style=\"width:auto;min-width:320pt;\">");
         if (targetLine) parts.push("<tr><td><strong>Target</strong></td><td>" + htmlEscape(targetLine) + "</td></tr>");
         parts.push("<tr><td><strong>Report date</strong></td><td>" + htmlEscape(reportDate) + "</td></tr>");
         parts.push("<tr><td><strong>Version</strong></td><td>1.0</td></tr>");
-        if (scope.din_organisation) parts.push("<tr><td><strong>Organisation</strong></td><td>" + htmlEscape(scope.din_organisation) + "</td></tr>");
-        if (scope.din_auftraggeber) parts.push("<tr><td><strong>Client</strong></td><td>" + htmlEscape(scope.din_auftraggeber) + "</td></tr>");
-        if (scope.din_pruefer) parts.push("<tr><td><strong>Tester</strong></td><td>" + htmlEscape(scope.din_pruefer) + "</td></tr>");
-        if (scope.din_vertraulichkeit) parts.push("<tr><td><strong>Confidentiality</strong></td><td>" + htmlEscape(scope.din_vertraulichkeit) + "</td></tr>");
+        if (scope.din_organisation) parts.push("<tr><td><strong>Organisation</strong></td><td class=\"din-rich-td\"><div class=\"din-rich\">" + (scope.din_organisation_html || htmlEscape(scope.din_organisation)) + "</div></td></tr>");
+        if (scope.din_auftraggeber) parts.push("<tr><td><strong>Client</strong></td><td class=\"din-rich-td\"><div class=\"din-rich\">" + (scope.din_auftraggeber_html || htmlEscape(scope.din_auftraggeber)) + "</div></td></tr>");
+        if (scope.din_pruefer) parts.push("<tr><td><strong>Tester</strong></td><td class=\"din-rich-td\"><div class=\"din-rich\">" + (scope.din_pruefer_html || htmlEscape(scope.din_pruefer)) + "</div></td></tr>");
+        if (scope.din_vertraulichkeit) parts.push("<tr><td><strong>Confidentiality</strong></td><td class=\"din-rich-td\"><div class=\"din-rich\">" + (scope.din_vertraulichkeit_html || htmlEscape(scope.din_vertraulichkeit)) + "</div></td></tr>");
         parts.push("</table>");
         if (scope.hero_note) {
-            parts.push("<h4>Analyst note</h4><p>" + htmlEscape(scope.hero_note) + "</p>");
+            var heroOut = scope.hero_note_html ? dinFlattenHtmlAmpEscapes(scope.hero_note_html) : dinPlainTextToHtml(scope.hero_note);
+            parts.push("<h4>Analyst note</h4><div class=\"din-rich\">" + heroOut + "</div>");
         }
         parts.push("</div>");
 
@@ -2111,11 +2857,42 @@ service=<xsl:value-of select="$port_result/@service"/> version=<xsl:value-of sel
             var v = parseInt(meta["threat_" + k] || "0", 10);
             if (!isNaN(v)) tcount += v;
         });
+        var statParts = [];
+        if (meta.hosts) statParts.push("hosts: " + meta.hosts);
+        if (meta.ports) statParts.push("open ports: " + meta.ports);
+        if (meta.evidence_files) {
+            var metaEvN = parseInt(meta.evidence_files, 10);
+            if (onlyVisibleEvidence && !isNaN(metaEvN) && evidence.length < metaEvN) {
+                statParts.push("evidence in this PDF: " + evidence.length + " (" + (metaEvN - evidence.length) + " hidden omitted)");
+            } else {
+                statParts.push("evidence files: " + meta.evidence_files);
+            }
+        }
+        var _execRiskRowsEarly = collectRiskEvalRowsForDin(onlyVisibleEvidence);
+        var _execRiskFlagsEarly = {
+            cvss: _execRiskRowsEarly.some(function (r) { return riskHasCvss(r) && rowExportsAnnex(r, "cvss"); }),
+            iso: _execRiskRowsEarly.some(function (r) { return riskHasIso(r) && rowExportsAnnex(r, "iso"); }),
+            bsi: _execRiskRowsEarly.some(function (r) { return riskHasBsi(r) && rowExportsAnnex(r, "bsi"); }),
+            nist: _execRiskRowsEarly.some(function (r) { return riskHasNist(r) && rowExportsAnnex(r, "nist"); })
+        };
+        var _execRiskParaEarly = executiveRiskSummaryParagraph(_execRiskRowsEarly, _execRiskFlagsEarly);
+        var showExecSummary = (tcount > 0) || (findings.length > 0) || (dinFfufNoiseCount > 0) || (statParts.length > 0) || !!_execRiskParaEarly;
+        if (showExecSummary) toc.push("Executive Summary");
         if (findings.length) {
-            toc.push("Executive Summary");
-            findings.forEach(function (f) {
-                toc.push("[" + (f.severity || "?").toUpperCase() + "] " + (f.type || "finding").replace(/_/g, " "));
-            });
+            if (findings.length > DIN_FINDINGS_TOC_COLLAPSE_AT) {
+                if (findings.length > DIN_FINDINGS_BODY_MAX) {
+                    toc.push("Findings (" + findings.length + " items — first " + DIN_FINDINGS_BODY_MAX + " detailed below)");
+                } else {
+                    toc.push("Findings (" + findings.length + " items — complete list below)");
+                }
+            } else {
+                findings.forEach(function (f) {
+                    toc.push("[" + (f.severity || "?").toUpperCase() + "] " + (f.type || "finding").replace(/_/g, " "));
+                });
+            }
+        }
+        if (dinFfufNoiseCount > 0) {
+            toc.push("Web discovery (ffuf), " + dinFfufNoiseCount + " hits — HTML tactical matrix only");
         }
         if (hosts.some(function (h) { return h.ports.length; })) toc.push("Network Services");
         if (scans.length) toc.push("Scan Commands");
@@ -2123,7 +2900,11 @@ service=<xsl:value-of select="$port_result/@service"/> version=<xsl:value-of sel
         var cmdNotes = [];
         document.querySelectorAll("[data-cmd-note]").forEach(function (el) {
             var tx = stripWhitespace(textContentSafe(el));
-            if (tx) cmdNotes.push({ key: el.getAttribute("data-cmd-note"), text: tx });
+            if (tx) cmdNotes.push({
+                key: el.getAttribute("data-cmd-note"),
+                text: tx,
+                html: dinRichOrPlain(el, tx)
+            });
         });
         if (cmdNotes.length) toc.push("Scan command notes");
 
@@ -2133,23 +2914,46 @@ service=<xsl:value-of select="$port_result/@service"/> version=<xsl:value-of sel
             parts.push("</ol></div>");
         }
 
-        if (tcount > 0 || findings.length) {
-            parts.push("<h2>Executive Summary</h2><table class=\"stat-table\" style=\"width:auto;min-width:200pt;\"><tr><th>Severity</th><th>Count</th></tr>");
-            threatKeys.forEach(function (k) {
-                var n = parseInt(meta["threat_" + k] || "0", 10) || 0;
-                parts.push("<tr><td>" + dinSevBadge(k) + "</td><td class=\"sev-num\">" + n + "</td></tr>");
-            });
-            parts.push("</table>");
-            var statParts = [];
-            if (meta.hosts) statParts.push("hosts: " + meta.hosts);
-            if (meta.ports) statParts.push("open ports: " + meta.ports);
-            if (meta.evidence_files) statParts.push("evidence files: " + meta.evidence_files);
-            if (statParts.length) parts.push("<p style=\"margin-top:8pt;\">Scan statistics — " + htmlEscape(statParts.join(", ")) + ".</p>");
+        /* Severity table only when cosmicmeta/summary aggregates threat_* (often unset → all zeros). */
+        if (showExecSummary) {
+            parts.push("<h2>Executive Summary</h2>");
+            if (tcount > 0) {
+                parts.push("<table class=\"stat-table\" style=\"width:auto;min-width:200pt;\"><tr><th>Severity</th><th>Count</th></tr>");
+                threatKeys.forEach(function (k) {
+                    var n = parseInt(meta["threat_" + k] || "0", 10) || 0;
+                    parts.push("<tr><td>" + dinSevBadge(k) + "</td><td class=\"sev-num\">" + n + "</td></tr>");
+                });
+                parts.push("</table>");
+            } else if (findings.length) {
+                var execFindNote = findings.length + " structured finding(s) in this report. Per-severity totals are not stored in merged scan metadata (threat_*); see each finding for its severity.";
+                if (findings.length > DIN_FINDINGS_BODY_MAX) {
+                    execFindNote = findings.length + " structured finding(s); the Findings section lists the first " + DIN_FINDINGS_BODY_MAX + ". Open the interactive HTML report for the full tactical table.";
+                }
+                parts.push("<p style=\"margin-top:0;\">" + htmlEscape(execFindNote) + "</p>");
+            } else if (dinFfufNoiseCount > 0 && tcount === 0) {
+                parts.push("<p style=\"margin-top:0;\">" + htmlEscape(
+                    "Structured findings in this printable annex are limited to non-ffuf items; see below for directory-enumeration volume."
+                ) + "</p>");
+            }
+            if (dinFfufNoiseCount > 0) {
+                parts.push("<p style=\"margin-top:8pt;font-size:9pt;color:#444;\">" + htmlEscape(
+                    "Automated ffuf web discovery: " + dinFfufNoiseCount + " directory/path hits are omitted from the Findings section to keep this PDF readable. Open the HTML report tactical matrix for the full list."
+                ) + "</p>");
+            }
+            if (statParts.length) {
+                parts.push("<p style=\"margin-top:8pt;\">Scan statistics — " + htmlEscape(statParts.join(", ")) + ".</p>");
+            }
+            if (_execRiskParaEarly) parts.push(_execRiskParaEarly);
         }
 
         if (findings.length) {
             parts.push("<h2>Findings</h2>");
-            findings.forEach(function (f) {
+            if (findings.length > DIN_FINDINGS_BODY_MAX) {
+                parts.push("<p style=\"font-size:9pt;color:#555;margin:0 0 10pt 0;\">" + htmlEscape(
+                    "Showing the first " + DIN_FINDINGS_BODY_MAX + " of " + findings.length + " structured findings. Open the interactive HTML report for the full tactical table."
+                ) + "</p>");
+            }
+            findings.slice(0, DIN_FINDINGS_BODY_MAX).forEach(function (f) {
                 var titleParts = [];
                 if (f.type) titleParts.push(typeLabel(f.type));
                 if (f.tool && f.tool !== "unknown") titleParts.push("(" + f.tool + ")");
@@ -2181,12 +2985,18 @@ service=<xsl:value-of select="$port_result/@service"/> version=<xsl:value-of sel
         }
 
         portData.rows.forEach(function (r) {
-            var noteBits = [];
-            if (r.analystNote) noteBits.push("Analyst: " + r.analystNote);
-            if (r.extra) noteBits.push("Extra: " + r.extra);
-            if (noteBits.length) {
-                parts.push("<h4>Port notes — " + htmlEscape(r.host + " " + r.protocol + "/" + r.port) + "</h4><p>" + htmlEscape(noteBits.join(" — ")) + "</p>");
+            if (!r.analystNote && !r.extra && !r.analystNoteHtml && !r.extraHtml) return;
+            parts.push("<h4>Port notes — " + htmlEscape(r.host + " " + r.protocol + "/" + r.port) + "</h4>");
+            parts.push("<div class=\"din-rich\" style=\"margin-bottom:8pt;\">");
+            if (r.analystNote || r.analystNoteHtml) {
+                parts.push("<div style=\"font-weight:bold;margin:4pt 0 2pt 0;\">Analyst</div>");
+                parts.push("<div>" + (r.analystNoteHtml ? dinFlattenHtmlAmpEscapes(r.analystNoteHtml) : dinPlainTextToHtml(r.analystNote)) + "</div>");
             }
+            if (r.extra || r.extraHtml) {
+                parts.push("<div style=\"font-weight:bold;margin:6pt 0 2pt 0;\">Extra</div>");
+                parts.push("<div>" + (r.extraHtml ? dinFlattenHtmlAmpEscapes(r.extraHtml) : dinPlainTextToHtml(r.extra)) + "</div>");
+            }
+            parts.push("</div>");
         });
 
         if (scans.length) {
@@ -2200,7 +3010,8 @@ service=<xsl:value-of select="$port_result/@service"/> version=<xsl:value-of sel
         if (cmdNotes.length) {
             parts.push("<h3>Scan command notes</h3><ul>");
             cmdNotes.forEach(function (cn) {
-                parts.push("<li><code>" + htmlEscape(cn.key) + "</code> — " + htmlEscape(cn.text) + "</li>");
+                var cmdH = cn.html ? dinFlattenHtmlAmpEscapes(cn.html) : htmlEscape(cn.text);
+                parts.push("<li><code>" + htmlEscape(cn.key) + "</code> — <span class=\"din-rich-inline\">" + cmdH + "</span></li>");
             });
             parts.push("</ul>");
         }
@@ -2219,9 +3030,13 @@ service=<xsl:value-of select="$port_result/@service"/> version=<xsl:value-of sel
                     var metaLine = "tool: " + (item.tool || "?") + " · status: " + (item.status || "OK");
                     if (item.timestamp) metaLine += " · " + item.timestamp;
                     parts.push("<p><strong>" + htmlEscape(item.file) + "</strong> — " + htmlEscape(metaLine) + "</p>");
-                    if (item.summary) parts.push("<p><em>Summary:</em> " + htmlEscape(truncate(item.summary, 400)) + "</p>");
+                    if (item.summary) {
+                        var sumBody = item.summaryHtml ? dinFlattenHtmlAmpEscapes(item.summaryHtml) : dinPlainTextToHtml(truncate(item.summary, 400));
+                        parts.push("<p><em>Summary:</em> <span class=\"din-rich-inline\">" + sumBody + "</span></p>");
+                    }
                     if (item.comment) {
-                        parts.push("<div style=\"background:#f9f9f9;border-left:3pt solid #2980b9;padding:6pt 8pt;margin:4pt 0;font-style:italic;\"><strong>Analyst Note:</strong> " + htmlEscape(item.comment) + "</div>");
+                        var comBody = item.commentHtml ? dinFlattenHtmlAmpEscapes(item.commentHtml) : dinPlainTextToHtml(item.comment);
+                        parts.push("<div class=\"analyst-note-box\" style=\"background:#f9f9f9;border-left:3pt solid #2980b9;padding:6pt 8pt;margin:4pt 0;\"><strong>Analyst Note:</strong> <span class=\"din-rich-inline\">" + comBody + "</span></div>");
                     }
                     var raw = item.raw || "";
                     if (raw.length > 4000) raw = raw.substring(0, 4000) + "\n\n[… truncated …]";
@@ -2230,16 +3045,34 @@ service=<xsl:value-of select="$port_result/@service"/> version=<xsl:value-of sel
             });
         }
 
-        parts.push("<p style=\"margin-top:20pt;font-size:8pt;color:#666;\">Print or Save as PDF from the browser dialog. Same section order as <code>evidence2html.py</code> + <code>pdf_export.generate_din5008_pdf</code>.</p>");
+        var _riskRows = collectRiskEvalRowsForDin(onlyVisibleEvidence);
+        /* Annex when data exists — do not use (possibly disabled) panel checkboxes */
+        var _riskFlags = {
+            cvss: _riskRows.some(function (r) { return riskHasCvss(r) && rowExportsAnnex(r, "cvss"); }),
+            iso: _riskRows.some(function (r) { return riskHasIso(r) && rowExportsAnnex(r, "iso"); }),
+            bsi: _riskRows.some(function (r) { return riskHasBsi(r) && rowExportsAnnex(r, "bsi"); }),
+            nist: _riskRows.some(function (r) { return riskHasNist(r) && rowExportsAnnex(r, "nist"); })
+        };
+        var _riskAnnex = buildRiskAnnexHtmlForDinPrint(_riskRows, _riskFlags);
+        if (_riskAnnex) parts.push(_riskAnnex);
+
+        var foot = "Print or Save as PDF from the browser dialog; disable <strong>Headers and footers</strong> so only this document’s muted Roman page line appears. Same section order as <code>evidence2html.py</code> + <code>pdf_export.generate_din5008_pdf</code>. Risk annexes come from saved evaluations (expand evidence, fill forms).";
+        if (onlyVisibleEvidence && meta.evidence_files) {
+            var mnFoot = parseInt(meta.evidence_files, 10);
+            if (!isNaN(mnFoot) && evidence.length < mnFoot) {
+                foot += " This export omits " + (mnFoot - evidence.length) + " evidence block(s) hidden in the browser (×).";
+            }
+        }
+        parts.push("<p style=\"margin-top:20pt;font-size:8pt;color:#666;\">" + foot + "</p>");
         parts.push("</body></html>");
         return parts.join("");
     }
-    function buildPdfReportHtml() {
-        return buildDin5008PythonAlignedHtml();
+    function buildPdfReportHtml(opts) {
+        return buildDin5008PythonAlignedHtml(opts);
     }
-    function openPdfExport() {
+    function openPdfExport(opts) {
         flushBrowserCacheIntoDom();
-        var data = buildPdfReportHtml();
+        var data = buildPdfReportHtml(opts || {});
         var win = window.open("", "_blank");
         if (!win) {
             window.alert("Popup blocked. Allow popups for this domain and click Export PDF again.");
@@ -2249,19 +3082,223 @@ service=<xsl:value-of select="$port_result/@service"/> version=<xsl:value-of sel
         win.document.write(data);
         win.document.close();
         win.focus();
-        win.onload = function () { setTimeout(function () { win.print(); }, 120); };
+        win.onload = function () { setTimeout(function () { win.print(); }, 450); };
     }
-    var btnHtml = document.getElementById("btn-export-html");
-    if (btnHtml) {
-        btnHtml.addEventListener("click", function () {
+    var PRINT_16X9_CSS = [
+        "<style id=\"cosmic-16x9-print\">",
+        "@page { size: 338mm 190mm; margin: 7mm 9mm; }",
+        "@media print {",
+        "  .box-btn-remove, .box-btn-reset, .box-header-actions,",
+        "  .section-edit-btn, .section-edit-hint, .editor-toolbar,",
+        "  .editor-palette, #global-edit-toggle, #section-restore-zone,",
+        "  .drag-handle, nav, .hud-toolbar, #pdf-export-panel,",
+        "  .export-menu-dropdown, .report-actions .report-btn { display: none !important; }",
+        "  body { background: #0a0a0a !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }",
+        "  .overview-16x9 {",
+        "    aspect-ratio: auto !important; min-height: 0 !important; max-height: none !important;",
+        "    overflow: visible !important; page-break-inside: auto !important; break-inside: auto !important;",
+        "    margin: 0 !important; padding: 5mm 6mm !important; width: 100% !important;",
+        "    border-width: 1px !important;",
+        "  }",
+        "  .hud-grid { display: block !important; grid-template-columns: 1fr !important; gap: 0 !important; }",
+        "  .hud-grid > .hud-card { width: 100% !important; max-width: 100% !important; margin: 0 0 4mm 0 !important;",
+        "  .hud-grid .theme-card { display: none !important; }",
+        "  .hero-card { height: auto !important; overflow: visible !important; page-break-inside: auto !important; break-inside: auto !important; }",
+        "  .hero-sloth-block { max-height: 46mm !important; overflow: hidden !important; margin-bottom: 2mm !important; }",
+        "  #hero-ascii-art.branding, #hero-ascii-art.ascii-editor {",
+        "    font-size: 4.2pt !important; line-height: 1.05 !important; max-height: 44mm !important;",
+        "    overflow: hidden !important; white-space: pre !important; margin: 0 !important;",
+        "  }",
+        "  .hero-note-block, #hero-note-input { page-break-inside: auto !important; break-inside: auto !important;",
+        "    max-height: none !important; overflow: visible !important; min-height: 0 !important; }",
+        "  #hero-note-input.analysis-inline-editor { font-size: 8pt !important; line-height: 1.35 !important; text-align: left !important; }",
+        "  .box-level-1 { page-break-before: always; break-before: page; page-break-inside: auto !important; break-inside: auto !important;",
+        "    margin: 0 0 4mm 0 !important; width: 100% !important; max-height: none !important; overflow: visible !important; }",
+        "  .box-level-1:first-of-type { page-break-before: auto; break-before: auto; }",
+        "  .box-level-1 .evidence-item, .evidence-raw { page-break-inside: auto; }",
+        "  table { width: 100% !important; font-size: 8pt !important; }",
+        "  pre, code { white-space: pre-wrap !important; word-break: break-word !important; font-size: 7pt !important; max-width: 100% !important; }",
+        "  .metric-row, .scope-metric-value { font-size: 8.5pt !important; }",
+        "}",
+        "</style>"
+    ].join("");
+    var PRINT_READER_CSS = [
+        "<style id=\"cosmic-reader-print\">",
+        "@page { size: A4 portrait; margin: 14mm 16mm 18mm 18mm; }",
+        "@media print {",
+        "  :root { color-scheme: light; }",
+        "  .box-btn-remove, .box-btn-reset, .box-header-actions,",
+        "  .section-edit-btn, .section-edit-hint, .editor-toolbar,",
+        "  .editor-palette, #global-edit-toggle, #section-restore-zone,",
+        "  .drag-handle, .box-drag-handle, .evidence-drag-handle,",
+        "  nav, .hud-toolbar, .export-menu-wrap, #pdf-export-panel,",
+        "  .port-controls, .port-main-actions, .btn-subtle-remove, .subrow-btn-reset,",
+        "  .report-actions .report-btn, .report-link-action,",
+        "  .analysis-add-btn, .eval-toggle-btn, .eval-suggest-btn,",
+        "  .eval-nvd-fetch-btn, .eval-export-row, .eval-nvd-fetch-row,",
+        "  .port-mini-btn, .section-restore-zone { display: none !important; }",
+        "  html, body { background: #fff !important; color: #0f172a !important;",
+        "    font-family: 'Segoe UI', 'Helvetica Neue', Arial, system-ui, sans-serif !important;",
+        "    font-size: 9.5pt !important; line-height: 1.45 !important;",
+        "    -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }",
+        "  .hud-grid { display: block !important; }",
+        "  .hud-grid > .hud-card { width: 100% !important; max-width: 100% !important; margin: 0 0 10pt 0 !important; }",
+        "  .hud-grid .theme-card { display: none !important; }",
+        "  .overview-16x9 { page-break-after: always; break-after: page;",
+        "    border: 1pt solid #cbd5e1 !important; padding: 10pt 12pt !important; background: #f8fafc !important;",
+        "    box-shadow: none !important; max-height: none !important; overflow: visible !important; }",
+        "  .hero-sloth-block { border-left: 3pt solid #1d4ed8 !important; padding-left: 10pt !important; margin-bottom: 8pt !important; }",
+        "  #hero-ascii-art.branding, #hero-ascii-art.ascii-editor {",
+        "    background: #f1f5f9 !important; color: #0f172a !important; border: 0.5pt solid #cbd5e1 !important;",
+        "    font-family: Consolas, 'Courier New', monospace !important; font-size: 5.5pt !important;",
+        "    line-height: 1.08 !important; white-space: pre !important; padding: 6pt !important;",
+        "    max-height: none !important; overflow: visible !important; }",
+        "  #hero-note-input.analysis-inline-editor { font-size: 9pt !important; color: #0f172a !important;",
+        "    text-align: left !important; border: 0.5pt dashed #cbd5e1 !important; padding: 6pt !important; min-height: 0 !important; }",
+        "  .inline-cell-editor[contenteditable] { border-bottom: 0.5pt solid #cbd5e1 !important; color: #0f172a !important; }",
+        "  .box-level-1 { page-break-before: always; break-before: page;",
+        "    border: 1pt solid #cbd5e1 !important; border-left: 4pt solid #1d4ed8 !important;",
+        "    padding: 12pt 14pt !important; margin: 0 0 12pt 0 !important; background: #fff !important;",
+        "    box-shadow: none !important; max-height: none !important; overflow: visible !important; }",
+        "  .box-level-1:first-of-type { page-break-before: auto; break-before: auto; }",
+        "  .box-level-1 h2, .box-level-1 > div > h2 { font-size: 13pt !important; font-weight: 700 !important;",
+        "    color: #0f172a !important; margin: 0 0 8pt 0 !important; padding-bottom: 4pt !important;",
+        "    border-bottom: 1pt solid #cbd5e1 !important; }",
+        "  .box-level-1 h3, .box-level-1 h4 { font-size: 10pt !important; font-weight: 600 !important;",
+        "    color: #475569 !important; margin: 10pt 0 4pt 0 !important; }",
+        "  .hint-text { color: #475569 !important; font-size: 8.5pt !important; }",
+        "  #port-matrix { width: 100% !important; border-collapse: collapse !important; font-size: 8pt !important; }",
+        "  #port-matrix th { background: #0f172a !important; color: #fff !important; font-weight: 600 !important;",
+        "    padding: 4pt 6pt !important; text-align: left !important; }",
+        "  #port-matrix td { border-bottom: 0.5pt solid #cbd5e1 !important; padding: 3pt 6pt !important; vertical-align: top !important; }",
+        "  .row-open td { background: #eff6ff !important; }",
+        "  .row-filtered td, .row-mixed td { background: #fffbeb !important; }",
+        "  .row-closed td { background: #f8fafc !important; color: #64748b !important; }",
+        "  .badge, .badge.open, .badge.closed, .badge.teal, .proto-tcp, .proto-udp {",
+        "    background: #f1f5f9 !important; color: #0f172a !important; border: 0.5pt solid #cbd5e1 !important;",
+        "    font-size: 7pt !important; font-weight: 600 !important; padding: 1pt 4pt !important; }",
+        "  #section-tactical table, .box-level-1 table { width: 100% !important; border-collapse: collapse !important; font-size: 8pt !important; }",
+        "  #section-tactical th, .box-level-1 thead th { background: #475569 !important; color: #fff !important; padding: 4pt 6pt !important; }",
+        "  tr[data-finding-severity=\"critical\"] td { border-left: 3pt solid #b91c1c !important; }",
+        "  tr[data-finding-severity=\"high\"] td { border-left: 3pt solid #c2410c !important; }",
+        "  tr[data-finding-severity=\"medium\"] td { border-left: 3pt solid #a16207 !important; }",
+        "  tr[data-finding-severity=\"low\"] td { border-left: 3pt solid #15803d !important; }",
+        "  tr[data-finding-severity=\"info\"] td { border-left: 3pt solid #0369a1 !important; }",
+        "  details.evidence-block { border: 0.5pt solid #cbd5e1 !important; padding: 8pt !important;",
+        "    margin: 0 0 8pt 0 !important; background: #f8fafc !important; page-break-inside: auto !important; }",
+        "  details.evidence-block summary { list-style: none !important; font-weight: 600 !important; color: #0f172a !important; cursor: default !important; }",
+        "  details.evidence-block summary::-webkit-details-marker { display: none !important; }",
+        "  .evidence-raw-edit, .evidence-raw { font-family: Consolas, 'Courier New', monospace !important;",
+        "    font-size: 7.5pt !important; line-height: 1.35 !important; background: #f1f5f9 !important;",
+        "    border: 0.5pt solid #cbd5e1 !important; padding: 6pt !important;",
+        "    white-space: pre-wrap !important; word-break: break-word !important; color: #0f172a !important; }",
+        "  .evidence-eval-panel { border-top: 1pt solid #cbd5e1 !important; margin-top: 8pt !important; padding-top: 8pt !important; }",
+        "  .eval-std-form { display: block !important; margin-bottom: 10pt !important; }",
+        "  .eval-form-grid label { color: #475569 !important; font-size: 8pt !important; }",
+        "  .eval-form-row input, .eval-form-row textarea, .eval-techref-block textarea {",
+        "    border: 0.5pt solid #cbd5e1 !important; background: #fff !important; color: #0f172a !important; font-size: 8pt !important; }",
+        "  pre, code, .cmd-preview { font-family: Consolas, 'Courier New', monospace !important; font-size: 7.5pt !important;",
+        "    background: #f1f5f9 !important; color: #0f172a !important; border: 0.5pt solid #cbd5e1 !important;",
+        "    white-space: pre-wrap !important; word-break: break-word !important; }",
+        "  a { color: #1d4ed8 !important; text-decoration: underline !important; }",
+        "}",
+        "</style>"
+    ].join("");
+    function openReaderPrint() {
+        flushBrowserCacheIntoDom();
+        document.querySelectorAll("details").forEach(function (d) { d.open = true; });
+        document.querySelectorAll(".box-level-1, .overview-16x9").forEach(function (el) {
+            if (el && el.style && el.style.display === "none") el.style.display = "";
+        });
+        document.querySelectorAll(".section-edit-locked").forEach(function (el) {
+            el.classList.remove("section-edit-locked");
+        });
+        document.querySelectorAll(".eval-std-form").forEach(function (el) { el.style.display = "block"; });
+        var oldR = document.getElementById("cosmic-reader-print");
+        if (oldR && oldR.parentNode) oldR.parentNode.removeChild(oldR);
+        var old16 = document.getElementById("cosmic-16x9-print");
+        if (old16 && old16.parentNode) old16.parentNode.removeChild(old16);
+        var wrap = document.createElement("div");
+        wrap.innerHTML = PRINT_READER_CSS;
+        var st = wrap.firstChild;
+        document.head.appendChild(st);
+        function cleanup() {
+            var x = document.getElementById("cosmic-reader-print");
+            if (x && x.parentNode) x.parentNode.removeChild(x);
+            window.removeEventListener("afterprint", cleanup);
+        }
+        window.addEventListener("afterprint", cleanup);
+        setTimeout(function () { window.print(); }, 80);
+    }
+    function open16x9Print() {
+        flushBrowserCacheIntoDom();
+        document.querySelectorAll("details").forEach(function (d) { d.open = true; });
+        document.querySelectorAll(".box-level-1, .overview-16x9").forEach(function (el) {
+            if (el && el.style && el.style.display === "none") el.style.display = "";
+        });
+        document.querySelectorAll(".section-edit-locked").forEach(function (el) {
+            el.classList.remove("section-edit-locked");
+        });
+        var oldR = document.getElementById("cosmic-reader-print");
+        if (oldR && oldR.parentNode) oldR.parentNode.removeChild(oldR);
+        var old = document.getElementById("cosmic-16x9-print");
+        if (old) old.parentNode.removeChild(old);
+        var wrap = document.createElement("div");
+        wrap.innerHTML = PRINT_16X9_CSS;
+        var st = wrap.firstChild;
+        document.head.appendChild(st);
+        function cleanup() {
+            var x = document.getElementById("cosmic-16x9-print");
+            if (x && x.parentNode) x.parentNode.removeChild(x);
+            window.removeEventListener("afterprint", cleanup);
+        }
+        window.addEventListener("afterprint", cleanup);
+        setTimeout(function () { window.print(); }, 80);
+    }
+    (function initExportMenu() {
+        var menuBtn = document.getElementById("btn-export-menu");
+        var drop = document.getElementById("export-menu-dropdown");
+        if (!menuBtn || !drop) return;
+        function setOpen(open) {
+            drop.classList.toggle("export-menu-open", open);
+            menuBtn.setAttribute("aria-expanded", open ? "true" : "false");
+            drop.setAttribute("aria-hidden", open ? "false" : "true");
+            if (open && window.cosmicUpdatePdfPanelCounts) window.cosmicUpdatePdfPanelCounts();
+        }
+        menuBtn.addEventListener("click", function (e) {
+            if (e.stopPropagation) e.stopPropagation();
+            setOpen(!drop.classList.contains("export-menu-open"));
+        });
+        document.addEventListener("click", function (e) {
+            var wrap = document.querySelector(".export-menu-wrap");
+            if (wrap && !wrap.contains(e.target)) setOpen(false);
+        });
+        var bDin = document.getElementById("export-do-din");
+        if (bDin) bDin.addEventListener("click", function () {
+            setOpen(false);
+            openPdfExport({ onlyVisibleEvidence: dinOnlyVisibleFromExportCheckbox() });
+        });
+        var b169 = document.getElementById("export-do-169");
+        if (b169) b169.addEventListener("click", function () { setOpen(false); open16x9Print(); });
+        var bReader = document.getElementById("export-do-reader");
+        if (bReader) bReader.addEventListener("click", function () { setOpen(false); openReaderPrint(); });
+        var bHtml = document.getElementById("export-do-html");
+        if (bHtml) bHtml.addEventListener("click", function () {
+            setOpen(false);
+            flushBrowserCacheIntoDom();
             var a = document.createElement("a");
-            a.href = URL.createObjectURL(new Blob([document.documentElement.outerHTML], {type: "text/html"}));
+            a.href = URL.createObjectURL(new Blob([document.documentElement.outerHTML], { type: "text/html" }));
             a.download = "cosmic_report.html";
             a.click();
         });
+    })();
+    var btnRisk = document.getElementById("btn-open-risk-panel");
+    if (btnRisk) {
+        btnRisk.addEventListener("click", function () {
+            var sec = document.getElementById("section-evidence");
+            if (sec) sec.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
     }
-    var btnPdf = document.getElementById("btn-export-pdf");
-    if (btnPdf) btnPdf.addEventListener("click", openPdfExport);
     (function readabilityToggle() {
         var btn = document.getElementById("readability-toggle");
         var key = "cosmicAnal:v1:readability";
@@ -2463,26 +3500,27 @@ service=<xsl:value-of select="$port_result/@service"/> version=<xsl:value-of sel
             if (!el) return "";
             return ((el.innerText || el.textContent || "").replace(/\r/g, "")).trim();
         }
-        function setValue(el, value) {
-            if (!el) return;
-            el.textContent = value || "";
-            el.classList.toggle("inline-empty", !((value || "").trim()));
-        }
         document.querySelectorAll("[data-port-extra-input]").forEach(function (el) {
             var rawKey = el.getAttribute("data-port-extra-input");
             var fallback = plain(el);
             if (!el.getAttribute("data-default")) el.setAttribute("data-default", fallback);
             try {
                 var saved = localStorage.getItem(key(rawKey));
-                if (saved !== null) setValue(el, saved);
-                else setValue(el, fallback);
+                if (saved !== null) dinApplyStoredHtml(el, saved);
+                else dinApplyStoredHtml(el, fallback);
             } catch (e) {}
-            setValue(el, plain(el));
+            el.classList.toggle("inline-empty", !plain(el));
             el.addEventListener("input", function () {
-                if (plain(el) === "") el.textContent = "";
+                if (plain(el) === "") {
+                    el.textContent = "";
+                    try { localStorage.removeItem(key(rawKey)); } catch (e1) {}
+                    el.classList.toggle("inline-empty", true);
+                    return;
+                }
                 var current = plain(el);
+                var html = sanitizeEditorHtmlFromElement(el);
                 try {
-                    if (current) localStorage.setItem(key(rawKey), current);
+                    if (current) localStorage.setItem(key(rawKey), html || current);
                     else localStorage.removeItem(key(rawKey));
                 } catch (e) {}
                 el.classList.toggle("inline-empty", !current);
@@ -2495,25 +3533,27 @@ service=<xsl:value-of select="$port_result/@service"/> version=<xsl:value-of sel
             if (!el) return "";
             return ((el.innerText || el.textContent || "").replace(/\r/g, "")).trim();
         }
-        function setValue(el, value) {
-            if (!el) return;
-            el.textContent = value || "";
-            el.classList.toggle("inline-empty", !((value || "").trim()));
-        }
         document.querySelectorAll("[data-cmd-note]").forEach(function (el) {
             var rawKey = el.getAttribute("data-cmd-note");
             try {
                 var saved = localStorage.getItem(key("cmdNote", rawKey));
-                if (saved !== null) setValue(el, saved);
-                else setValue(el, "");
+                if (saved !== null) dinApplyStoredHtml(el, saved);
+                else el.textContent = "";
             } catch (e) {}
+            el.classList.toggle("inline-empty", !plain(el));
             el.addEventListener("input", function () {
-                if (plain(el) === "") el.textContent = "";
+                if (plain(el) === "") {
+                    el.textContent = "";
+                    try { localStorage.removeItem(key("cmdNote", rawKey)); } catch (e1) {}
+                    el.classList.toggle("inline-empty", true);
+                    return;
+                }
                 var current = plain(el);
+                var html = sanitizeEditorHtmlFromElement(el);
                 try {
-                    if (current) localStorage.setItem(key("cmdNote", rawKey), current);
+                    if (current) localStorage.setItem(key("cmdNote", rawKey), html || current);
                     else localStorage.removeItem(key("cmdNote", rawKey));
-                } catch (e) {}
+                } catch (e2) {}
                 el.classList.toggle("inline-empty", !current);
             });
         });
@@ -2521,16 +3561,23 @@ service=<xsl:value-of select="$port_result/@service"/> version=<xsl:value-of sel
             var rawKey = el.getAttribute("data-cmd-extra");
             try {
                 var saved = localStorage.getItem(key("cmdExtra", rawKey));
-                if (saved !== null) setValue(el, saved);
-                else setValue(el, "");
+                if (saved !== null) dinApplyStoredHtml(el, saved);
+                else el.textContent = "";
             } catch (e) {}
+            el.classList.toggle("inline-empty", !plain(el));
             el.addEventListener("input", function () {
-                if (plain(el) === "") el.textContent = "";
+                if (plain(el) === "") {
+                    el.textContent = "";
+                    try { localStorage.removeItem(key("cmdExtra", rawKey)); } catch (e1) {}
+                    el.classList.toggle("inline-empty", true);
+                    return;
+                }
                 var current = plain(el);
+                var html = sanitizeEditorHtmlFromElement(el);
                 try {
-                    if (current) localStorage.setItem(key("cmdExtra", rawKey), current);
+                    if (current) localStorage.setItem(key("cmdExtra", rawKey), html || current);
                     else localStorage.removeItem(key("cmdExtra", rawKey));
-                } catch (e) {}
+                } catch (e2) {}
                 el.classList.toggle("inline-empty", !current);
             });
         });
@@ -2874,17 +3921,29 @@ service=<xsl:value-of select="$port_result/@service"/> version=<xsl:value-of sel
             storeDefault(commentEl);
 
             var existing = read(rawKey) || {};
-            if (titleEl && existing.title) titleEl.textContent = existing.title;
-            if (sumEl && existing.summary) sumEl.textContent = existing.summary;
+            if (titleEl) {
+                if (existing.titleHtml) titleEl.innerHTML = existing.titleHtml;
+                else if (existing.title) titleEl.textContent = existing.title;
+            }
+            if (sumEl) {
+                if (existing.summaryHtml) sumEl.innerHTML = existing.summaryHtml;
+                else if (existing.summary) sumEl.textContent = existing.summary;
+            }
             if (rawEl && existing.raw) rawEl.textContent = existing.raw;
-            if (commentEl && existing.comment) commentEl.textContent = existing.comment;
+            if (commentEl) {
+                if (existing.commentHtml) commentEl.innerHTML = existing.commentHtml;
+                else if (existing.comment) commentEl.textContent = existing.comment;
+            }
 
             function saveAll() {
                 var rec = {
                     title: plain(titleEl) || "",
+                    titleHtml: sanitizeEditorHtmlFromElement(titleEl) || "",
                     summary: plain(sumEl) || "",
+                    summaryHtml: sanitizeEditorHtmlFromElement(sumEl) || "",
                     raw: plain(rawEl) || "",
-                    comment: plain(commentEl) || ""
+                    comment: plain(commentEl) || "",
+                    commentHtml: sanitizeEditorHtmlFromElement(commentEl) || ""
                 };
                 if (!rec.title && !rec.summary && !rec.raw && !rec.comment) {
                     try { localStorage.removeItem(evKey(rawKey)); } catch (e) {}
@@ -3331,14 +4390,16 @@ service=<xsl:value-of select="$port_result/@service"/> version=<xsl:value-of sel
                     isEditing = saved === "editing";
                 } catch (e) {}
 
+                /* section-edit-locked on the section restores pointer-events when body.cosmic-edit-locked
+                   (see CSS). "Editing" mode must ADD this class, not remove it — previously inverted. */
                 function apply() {
                     if (isEditing) {
-                        section.classList.remove('section-edit-locked');
+                        section.classList.add('section-edit-locked');
                         btn.textContent = "Lock";
                         btn.classList.add('editing');
-                        if (hint) hint.textContent = "Editing enabled - select text to edit";
+                        if (hint) hint.textContent = "Editing enabled — click in text to place the cursor";
                     } else {
-                        section.classList.add('section-edit-locked');
+                        section.classList.remove('section-edit-locked');
                         btn.textContent = "Edit";
                         btn.classList.remove('editing');
                         if (hint) hint.textContent = "Locked";
@@ -3411,6 +4472,815 @@ service=<xsl:value-of select="$port_result/@service"/> version=<xsl:value-of sel
 
         loadSectionOrder();
         updateRestoreZone();
+    })();
+
+    // =========================================================================
+    // RISK EVALUATION PANEL LOGIC
+    // =========================================================================
+    (function riskEvaluationModule() {
+        // Read evaluation record from localStorage (prefix = COSMIC_EVAL_PREFIX)
+        function readEval(key) {
+            try {
+                var raw = localStorage.getItem(COSMIC_EVAL_PREFIX + key);
+                if (!raw) return {};
+                return JSON.parse(raw);
+            } catch (e) { return {}; }
+        }
+
+        // Save evaluation record to localStorage
+        function saveEval(key, data) {
+            try {
+                localStorage.setItem(COSMIC_EVAL_PREFIX + key, JSON.stringify(data));
+            } catch (e) {}
+        }
+
+        function rowExportsForCount(d, std) {
+            var inc = d.exportInclude || {};
+            return inc[std] !== false;
+        }
+
+        function compactTechnicalRefForStore(obj) {
+            var cve = obj.cve || (obj.nvd && obj.nvd.cve) || "";
+            var out = {
+                schema: obj.schema || null,
+                generated: obj.generated,
+                cve: cve,
+                epss: obj.epss || null,
+                kev: obj.kev || null,
+                note: obj.note || null
+            };
+            if (obj.nvd && typeof obj.nvd === "object") {
+                out.nvd = {
+                    found: obj.nvd.found,
+                    description: truncate((obj.nvd.description || ""), 450)
+                };
+            }
+            return out;
+        }
+
+        var NVD_CVE_API = "https://services.nvd.nist.gov/rest/json/cves/2.0";
+        var NVD_CVE_ID_RE = /^CVE-\d{4}-\d+$/i;
+
+        function normalizeCveIdForNvd(raw) {
+            return (raw || "").replace(/\s+/g, "").toUpperCase();
+        }
+        function validateCveIdForNvd(cveId) {
+            if (!cveId || !cveId.startsWith("CVE-")) {
+                return "Use a CVE id like CVE-2024-21410 (no placeholders).";
+            }
+            if (!NVD_CVE_ID_RE.test(cveId)) {
+                return "Invalid CVE format: use CVE-YYYY- followed by digits only.";
+            }
+            return null;
+        }
+        function pickCvssV31FromMetrics(metricsBlock) {
+            if (!metricsBlock || typeof metricsBlock !== "object") return null;
+            var order = ["cvssMetricV31", "cvssMetricV30"];
+            for (var oi = 0; oi < order.length; oi++) {
+                var key = order[oi];
+                var lst = metricsBlock[key];
+                if (!Array.isArray(lst)) continue;
+                var i, item, data, src;
+                for (i = 0; i < lst.length; i++) {
+                    item = lst[i];
+                    if (!item || typeof item !== "object") continue;
+                    src = String(item.type || "").toUpperCase();
+                    if (src === "PRIMARY" || key === "cvssMetricV31") {
+                        data = item.cvssData;
+                        if (data && typeof data === "object" && data.vectorString) return data;
+                    }
+                }
+                for (i = 0; i < lst.length; i++) {
+                    item = lst[i];
+                    if (item && typeof item === "object") {
+                        data = item.cvssData;
+                        if (data && typeof data === "object" && data.vectorString) return data;
+                    }
+                }
+            }
+            return null;
+        }
+        function nvdApiResponseToLookupResult(data, cveId) {
+            var vulns = data && data.vulnerabilities;
+            if (!Array.isArray(vulns) || vulns.length === 0) {
+                return { cve: cveId, found: false, error: "No vulnerability record returned" };
+            }
+            var cve = vulns[0].cve || {};
+            var metrics = cve.metrics || {};
+            var cvssData = pickCvssV31FromMetrics(metrics);
+            var out = { cve: cveId, found: true, description: null, cvss: {} };
+            var desc = cve.descriptions || [];
+            var di;
+            for (di = 0; di < desc.length; di++) {
+                if (desc[di] && desc[di].lang === "en") {
+                    out.description = desc[di].value;
+                    break;
+                }
+            }
+            if (!out.description && desc[0] && desc[0].value) out.description = desc[0].value;
+            if (cvssData) {
+                out.cvss = {
+                    vector: cvssData.vectorString || "",
+                    baseScore: cvssData.baseScore,
+                    version: cvssData.version || "3.1"
+                };
+            } else {
+                out.cvss = { vector: "", baseScore: null, note: "No CVSS v3.x vector in NVD metrics" };
+            }
+            return out;
+        }
+        function guessCveFromEvidenceRaw(panel) {
+            var det = panel.closest("details.evidence-block");
+            if (!det) return "";
+            var rawEl = det.querySelector("[data-evidence-raw-input]");
+            var raw = rawEl ? stripWhitespace(textContentSafe(rawEl)) : "";
+            var m = raw.match(/\b(CVE-\d{4}-\d+)\b/i);
+            return m ? m[1].toUpperCase() : "";
+        }
+        function applyNvdLookupResultToPanel(panel, result) {
+            if (!result.found) {
+                window.alert(result.error || "CVE not found in NVD.");
+                return;
+            }
+            var key = panel.getAttribute("data-eval-key");
+            var data = readEval(key);
+            if (!data.cvss) data.cvss = {};
+            var cv = result.cvss || {};
+            var hadCvss = false;
+            if (cv.vector && String(cv.vector).trim()) {
+                data.cvss.vector = String(cv.vector).trim();
+                hadCvss = true;
+            }
+            if (cv.baseScore != null && cv.baseScore !== "") {
+                var p = parseFloat(cv.baseScore);
+                if (!isNaN(p)) {
+                    data.cvss.baseScore = p;
+                    hadCvss = true;
+                }
+            }
+            var obj = { cve: result.cve, nvd: result, cvss: data.cvss };
+            data.technicalRef = compactTechnicalRefForStore(obj);
+            saveEval(key, data);
+            var ta = panel.querySelector(".eval-techref-json");
+            if (ta) {
+                try {
+                    ta.value = JSON.stringify(result, null, 2);
+                } catch (e2) { ta.value = ""; }
+            }
+            loadFormValues(panel);
+            updateToggleButtons(panel);
+            updateTechRefStatus(panel);
+            updateEvalTracePanel(panel);
+            updatePdfPanelCounts();
+            if (!hadCvss) {
+                window.alert("NVD returned a record but no CVSS v3.x vector/score. Technical reference (description) was saved; add CVSS manually or use full vuln_ref_lookup.py JSON.");
+            }
+        }
+        function fetchNvdCvssForPanel(panel) {
+            var inp = panel.querySelector(".eval-nvd-cve-input");
+            var cveRaw = normalizeCveIdForNvd(inp && inp.value || "");
+            if (!cveRaw) cveRaw = guessCveFromEvidenceRaw(panel);
+            var err = validateCveIdForNvd(cveRaw);
+            if (err) {
+                window.alert(err + (inp && !stripWhitespace(inp.value || "") ? " (Or type a CVE in the field next to the button.)" : ""));
+                return;
+            }
+            var url = NVD_CVE_API + "?cveId=" + encodeURIComponent(cveRaw);
+            var btn = panel.querySelector(".eval-nvd-fetch-btn");
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = "Fetching…";
+            }
+            fetch(url, { headers: { "Accept": "application/json" }, credentials: "omit" })
+                .then(function (r) {
+                    if (r.status === 404) {
+                        throw new Error("NVD: not found (404). Check the CVE id at nvd.nist.gov.");
+                    }
+                    if (r.status === 403 || r.status === 429) {
+                        throw new Error("NVD rate limit or blocked (" + r.status + "). Wait and retry, or use python3 nvd_cve_lookup.py from the CLI.");
+                    }
+                    if (!r.ok) throw new Error("NVD HTTP " + r.status);
+                    return r.json();
+                })
+                .then(function (json) {
+                    applyNvdLookupResultToPanel(panel, nvdApiResponseToLookupResult(json, cveRaw));
+                })
+                .catch(function (e) {
+                    var msg = (e && e.message) ? e.message : String(e);
+                    if (/Failed to fetch|NetworkError|load failed/i.test(msg)) {
+                        msg += " (Offline, CORS, or blocked. Try CLI: python3 nvd_cve_lookup.py " + cveRaw + ")";
+                    }
+                    window.alert(msg);
+                })
+                .finally(function () {
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.textContent = "Fetch CVSS from NVD";
+                    }
+                });
+        }
+
+        function mergeTechnicalRefFromTextarea(panel) {
+            var ta = panel.querySelector(".eval-techref-json");
+            if (!ta) return;
+            var text = stripWhitespace(ta.value || "");
+            if (!text) {
+                window.alert("Paste JSON from: python3 vuln_ref_lookup.py CVE-… --json");
+                return;
+            }
+            var obj;
+            try {
+                obj = JSON.parse(text);
+            } catch (e1) {
+                window.alert("Not valid JSON.");
+                return;
+            }
+            var cv = obj.cvss;
+            if (!cv && obj.nvd && obj.nvd.cvss) {
+                cv = obj.nvd.cvss;
+            }
+            if (!cv || typeof cv !== "object") {
+                window.alert("JSON must include cvss (or nvd.cvss) — cosmic-vuln-ref/1 or nvd_cve_lookup output.");
+                return;
+            }
+            var key = panel.getAttribute("data-eval-key");
+            var data = readEval(key);
+            if (!data.cvss) data.cvss = {};
+            if (cv.vector && String(cv.vector).trim()) {
+                data.cvss.vector = String(cv.vector).trim();
+            }
+            if (cv.baseScore != null && cv.baseScore !== "") {
+                var p = parseFloat(cv.baseScore);
+                if (!isNaN(p)) data.cvss.baseScore = p;
+            }
+            data.technicalRef = compactTechnicalRefForStore(obj);
+            saveEval(key, data);
+            loadFormValues(panel);
+            updateToggleButtons(panel);
+            updateTechRefStatus(panel);
+            updateEvalTracePanel(panel);
+            updatePdfPanelCounts();
+        }
+        function updateTechRefStatus(panel) {
+            var st = panel.querySelector(".eval-techref-status");
+            if (!st) return;
+            var key = panel.getAttribute("data-eval-key");
+            var data = readEval(key);
+            var tr = data.technicalRef;
+            if (tr && tr.cve) {
+                var bits = [tr.cve];
+                if (tr.epss && tr.epss.found && tr.epss.score != null) {
+                    bits.push("EPSS " + String(tr.epss.score).slice(0, 8));
+                }
+                if (tr.kev && tr.kev.in_catalog) bits.push("CISA KEV");
+                if (tr.nvd && tr.nvd.found) bits.push("NVD");
+                st.textContent = "Saved: " + bits.join(" · ");
+            } else {
+                st.textContent = "";
+            }
+        }
+
+        function extractSeverityKeyword(raw) {
+            var r = raw;
+            var m;
+            m = r.match(/[\"']severity[\"']\s*:\s*[\"'](info|low|medium|high|critical)[\"']/i);
+            if (m) return m[1].toLowerCase();
+            m = r.match(/\bseverity\s*[:=]\s*[\"']?(info|low|medium|high|critical)[\"']?/i);
+            if (m) return m[1].toLowerCase();
+            m = r.match(/\[(info|low|medium|high|critical)\](?!\])/i);
+            if (m) return m[1].toLowerCase();
+            m = r.match(/\b(info|low|medium|high|critical)\s+severity\b/i);
+            if (m) return m[1].toLowerCase();
+            m = r.match(/\bseverity\s*=\s*(info|low|medium|high|critical)\b/i);
+            if (m) return m[1].toLowerCase();
+            m = r.match(/\b(informational)\b/i);
+            if (m) return "info";
+            return null;
+        }
+        function looksLikePortScan(raw, tool) {
+            if (/\b\d{1,5}\/(tcp|udp)\b/i.test(raw)) return true;
+            if (/\b(open|filtered)\b/i.test(raw) && /\d{2,5}/.test(raw)) return true;
+            if (/Nmap scan report|Starting Nmap|PORT\s+STATE\s+SERVICE|Host is up/i.test(raw)) return true;
+            if (/\b\d{1,3}(?:\.\d{1,3}){3}:\d{2,5}\b/.test(raw)) return true;
+            if (tool.indexOf("naabu") >= 0 || tool.indexOf("masscan") >= 0 || tool.indexOf("rustscan") >= 0) return true;
+            return false;
+        }
+        function applySeverityPreset(sev, data, reason) {
+            var map = {
+                critical: { l: 5, i: 5, nl: "Very High", ni: "Very High", bsi: "Sehr hoch" },
+                high: { l: 4, i: 4, nl: "High", ni: "High", bsi: "Hoch" },
+                medium: { l: 3, i: 3, nl: "Moderate", ni: "Moderate", bsi: "Hoch" },
+                low: { l: 2, i: 2, nl: "Low", ni: "Low", bsi: "Normal" },
+                info: { l: 2, i: 1, nl: "Low", ni: "Very Low", bsi: "Normal" }
+            };
+            if (!sev || !map[sev]) return false;
+            var m = map[sev];
+            var iso = data.iso27005 || {};
+            if (!data.iso27005) data.iso27005 = iso;
+            var ch = false;
+            if (!iso.likelihood) { iso.likelihood = m.l; ch = true; }
+            if (!iso.impact) { iso.impact = m.i; ch = true; }
+            if (!data.nist) data.nist = {};
+            if (!data.nist.likelihood) { data.nist.likelihood = m.nl; ch = true; }
+            if (!data.nist.impact) { data.nist.impact = m.ni; ch = true; }
+            if (!data.bsi) data.bsi = {};
+            if (!data.bsi.protectionNeed) {
+                data.bsi.protectionNeed = m.bsi;
+                if (!data.bsi.measureStatus) data.bsi.measureStatus = "Teilweise";
+                if (!data.bsi.gap) data.bsi.gap = reason || "Heuristic from scanner output; please validate.";
+                ch = true;
+            }
+            return ch;
+        }
+        function updateEvalTracePanel(panel) {
+            var el = panel.querySelector(".eval-auto-trace");
+            if (!el) return;
+            var key = panel.getAttribute("data-eval-key");
+            var data = readEval(key);
+            var t = data.autoTrace;
+            if (t) {
+                el.textContent = "Indicators: " + t;
+                el.style.display = "block";
+            } else {
+                el.textContent = "";
+                el.style.display = "none";
+            }
+        }
+        function applyNetworkBaseline(data, reason) {
+            var iso = data.iso27005 || {};
+            if (!data.iso27005) data.iso27005 = iso;
+            var ch = false;
+            if (!iso.likelihood) { iso.likelihood = 2; ch = true; }
+            if (!iso.impact) { iso.impact = 2; ch = true; }
+            if (!data.nist) data.nist = {};
+            if (!data.nist.likelihood) { data.nist.likelihood = "Low"; ch = true; }
+            if (!data.nist.impact) { data.nist.impact = "Low"; ch = true; }
+            if (!data.bsi) data.bsi = {};
+            if (!data.bsi.protectionNeed) {
+                data.bsi.protectionNeed = "Normal";
+                if (!data.bsi.measureStatus) data.bsi.measureStatus = "Teilweise";
+                if (!data.bsi.gap) data.bsi.gap = reason || "Network/port finding; deeper review recommended.";
+                ch = true;
+            }
+            return ch;
+        }
+        function applyEvidenceSuggestions(panel) {
+            var key = panel.getAttribute("data-eval-key");
+            var data = readEval(key);
+            var det = panel.closest("details.evidence-block");
+            if (!det) return;
+            var rawEl = det.querySelector("[data-evidence-raw-input]");
+            var raw = rawEl ? textContentSafe(rawEl) : "";
+            raw = stripWhitespace(raw);
+            var tool = (det.getAttribute("data-evidence-tool") || "").toLowerCase();
+            var fname = (det.getAttribute("data-evidence-key") || "").split("|")[0].toLowerCase();
+            var changed = false;
+            var traceParts = [];
+            function ensureCvss() {
+                if (!data.cvss) data.cvss = {};
+                return data.cvss;
+            }
+            var sev = extractSeverityKeyword(raw);
+            if (sev && applySeverityPreset(sev, data, "Heuristic: severity pattern found in evidence text.")) {
+                changed = true;
+                traceParts.push("severity:" + sev);
+            }
+            var cve = raw.match(/\b(CVE-\d{4}-\d+)\b/i);
+            if (cve) {
+                traceParts.push("cve:" + cve[1]);
+                var cv = ensureCvss();
+                if (!(cv.vector && String(cv.vector).trim())) {
+                    alert("CVE in raw text (regex): " + cve[1] + "\\n\\nOpen the CVSS tab → Fetch CVSS from NVD (browser), or CLI:\\n  python3 vuln_ref_lookup.py " + cve[1] + " --json");
+                }
+                if (!changed && applyNetworkBaseline(data, "CVE " + cve[1] + " — add CVSS via nvd_cve_lookup.py or vuln_ref_lookup.py.")) {
+                    changed = true;
+                    traceParts.push("baseline:netz");
+                }
+            }
+            if (!changed && (tool.indexOf("nmap") >= 0 || /nmap/i.test(fname)) && looksLikePortScan(raw, tool)) {
+                if (applyNetworkBaseline(data, "Nmap finding (open/filtered ports); assess in context.")) {
+                    changed = true;
+                    traceParts.push("ports:nmap");
+                }
+            }
+            if (!changed && looksLikePortScan(raw, tool) && (tool.indexOf("naabu") >= 0 || tool.indexOf("masscan") >= 0 || tool.indexOf("rustscan") >= 0 || /naabu|masscan|rustscan/i.test(fname))) {
+                if (applyNetworkBaseline(data, "Port scanner: reachable ports; risk depends on service.")) {
+                    changed = true;
+                    traceParts.push("ports:" + (tool.indexOf("naabu") >= 0 ? "naabu" : tool.indexOf("masscan") >= 0 ? "masscan" : "rustscan"));
+                }
+            }
+            if (!changed && (tool.indexOf("ffuf") >= 0 || tool.indexOf("ferox") >= 0 || /ffuf|ferox|wfuzz|gobuster|dirsearch/i.test(fname))) {
+                var st = raw.match(/\b(?:status|Status):\s*(\d{3})\b/);
+                var code = st ? parseInt(st[1], 10) : 0;
+                var sevFf = null;
+                if (code >= 500) sevFf = "high";
+                else if (code === 401 || code === 403) sevFf = "medium";
+                else if (code >= 200 && code < 300) sevFf = "low";
+                if (sevFf && applySeverityPreset(sevFf, data, "HTTP status in directory/web fuzzing output (heuristic).")) {
+                    changed = true;
+                    traceParts.push("http:" + code);
+                } else if (/\b200\b.*\b(?:lines|words|size)|\[Status:\s*200/i.test(raw)) {
+                    if (applySeverityPreset("low", data, "Web fuzzing: hits / 200 responses; review content.")) {
+                        changed = true;
+                        traceParts.push("fuzz:200");
+                    }
+                }
+            }
+            if (!changed && raw.length > 30 && (tool.indexOf("unknown") >= 0 || tool === "")) {
+                if (looksLikePortScan(raw, "naabu")) {
+                    if (applyNetworkBaseline(data, "Port/network text detected (unknown tool); classify manually.")) {
+                        changed = true;
+                        traceParts.push("ports:text");
+                    }
+                }
+            }
+            if (changed) {
+                data.autoTrace = traceParts.join(" · ");
+                saveEval(key, data);
+                loadFormValues(panel);
+                updateToggleButtons(panel);
+                updateEvalTracePanel(panel);
+                updatePdfPanelCounts();
+            } else {
+                delete data.autoTrace;
+                saveEval(key, data);
+                updateEvalTracePanel(panel);
+                if (!cve) {
+                    alert("No heuristic match: no severity pattern (Nuclei-like), nor clear port/HTTP finding. Fill fields manually or use nvd_cve_lookup.py / vuln_ref_lookup.py for CVEs.");
+                }
+            }
+        }
+
+        // Get nested property from object
+        function getNestedProp(obj, path) {
+            var parts = path.split(".");
+            var current = obj;
+            for (var i = 0; i < parts.length; i++) {
+                if (current == null) return undefined;
+                current = current[parts[i]];
+            }
+            return current;
+        }
+
+        // Set nested property in object
+        function setNestedProp(obj, path, value) {
+            var parts = path.split(".");
+            var current = obj;
+            for (var i = 0; i < parts.length - 1; i++) {
+                if (!current[parts[i]]) current[parts[i]] = {};
+                current = current[parts[i]];
+            }
+            current[parts[parts.length - 1]] = value;
+        }
+
+        // Check readiness for a standard
+        function checkReadiness(std, data) {
+            if (std === "cvss") {
+                var cvss = data.cvss || {};
+                var hasVector = !!(cvss.vector && cvss.vector.trim());
+                var hasScore = cvss.baseScore != null && cvss.baseScore !== "";
+                return { ready: hasVector || hasScore, missing: hasVector || hasScore ? [] : ["vector or score"] };
+            }
+            if (std === "iso") {
+                var iso = data.iso27005 || {};
+                var missing = [];
+                if (!iso.likelihood) missing.push("likelihood");
+                if (!iso.impact) missing.push("impact");
+                return { ready: missing.length === 0, missing: missing };
+            }
+            if (std === "bsi") {
+                var bsi = data.bsi || {};
+                var missing = [];
+                if (!bsi.protectionNeed) missing.push("Schutzbedarf");
+                if (!bsi.measureStatus) missing.push("Maßnahmenstatus");
+                return { ready: missing.length === 0, missing: missing };
+            }
+            if (std === "nist") {
+                var nist = data.nist || {};
+                var missing = [];
+                if (!nist.likelihood) missing.push("likelihood");
+                if (!nist.impact) missing.push("impact");
+                return { ready: missing.length === 0, missing: missing };
+            }
+            return { ready: false, missing: ["unknown"] };
+        }
+
+        // Update button state based on readiness
+        function updateToggleButtons(panel) {
+            var key = panel.getAttribute("data-eval-key");
+            var data = readEval(key);
+            var standards = ["cvss", "iso", "bsi", "nist"];
+
+            standards.forEach(function(std) {
+                var btn = panel.querySelector('[data-eval-std="' + std + '"]');
+                if (!btn) return;
+
+                var readiness = checkReadiness(std, data);
+                btn.disabled = false; // Always enabled now for input
+                btn.classList.toggle("eval-ready", readiness.ready);
+
+                // Update hint in form
+                var hint = panel.querySelector('[data-readiness="' + std + '"]');
+                if (hint) {
+                    if (readiness.ready) {
+                        hint.textContent = "✓ Complete";
+                        hint.classList.add("ready");
+                        hint.classList.remove("incomplete");
+                    } else {
+                        hint.textContent = "Missing: " + readiness.missing.join(", ");
+                        hint.classList.remove("ready");
+                        hint.classList.add("incomplete");
+                    }
+                }
+            });
+        }
+
+        // Load saved values into form fields
+        function loadFormValues(panel) {
+            var key = panel.getAttribute("data-eval-key");
+            var data = readEval(key);
+
+            panel.querySelectorAll("[data-eval-field]").forEach(function(field) {
+                var path = field.getAttribute("data-eval-field");
+                var value = getNestedProp(data, path);
+                if (value != null && value !== "") {
+                    if (field.tagName === "SELECT") {
+                        field.value = value;
+                    } else if (field.tagName === "TEXTAREA") {
+                        field.value = value;
+                    } else {
+                        field.value = value;
+                    }
+                } else if (path === "cvss.baseScore" && value === 0) {
+                    field.value = "0";
+                }
+            });
+            panel.querySelectorAll(".eval-export-cb").forEach(function(cb) {
+                var std = cb.getAttribute("data-export-std");
+                var inc = (data.exportInclude || {})[std];
+                cb.checked = inc !== false;
+            });
+            var nvdInp = panel.querySelector(".eval-nvd-cve-input");
+            if (nvdInp) {
+                var trCve = data.technicalRef && data.technicalRef.cve;
+                if (trCve) nvdInp.value = trCve;
+            }
+            updateEvalTracePanel(panel);
+            updateTechRefStatus(panel);
+        }
+
+        // Save form field change
+        function handleFieldChange(panel, field) {
+            var key = panel.getAttribute("data-eval-key");
+            var data = readEval(key);
+            var path = field.getAttribute("data-eval-field");
+            var value = field.value;
+            if (data.autoTrace) {
+                delete data.autoTrace;
+            }
+            if (path === "cvss.vector" || path === "cvss.baseScore") {
+                if (data.technicalRef) {
+                    delete data.technicalRef;
+                }
+            }
+
+            // Convert numeric fields
+            if (path.includes("likelihood") || path.includes("impact")) {
+                if (path.startsWith("iso27005")) {
+                    value = value ? parseInt(value, 10) : null;
+                }
+            }
+            if (path === "cvss.baseScore") {
+                if (value === "" || value == null) {
+                    value = null;
+                } else {
+                    var parsed = parseFloat(value);
+                    value = isNaN(parsed) ? null : parsed;
+                }
+            }
+
+            setNestedProp(data, path, value);
+            saveEval(key, data);
+            updateToggleButtons(panel);
+            updateEvalTracePanel(panel);
+            updateTechRefStatus(panel);
+            updatePdfPanelCounts();
+        }
+
+        // Toggle form visibility for a standard
+        function toggleStdForm(panel, std) {
+            var container = panel.querySelector('[data-eval-form]');
+            var forms = panel.querySelectorAll('.eval-std-form');
+            var targetForm = panel.querySelector('[data-std-form="' + std + '"]');
+            var btns = panel.querySelectorAll('.eval-toggle-btn');
+
+            // Check if already visible
+            var isVisible = targetForm && targetForm.style.display !== "none";
+
+            // Hide all forms
+            forms.forEach(function(f) { f.style.display = "none"; });
+            btns.forEach(function(b) { b.classList.remove("eval-active"); });
+
+            if (!isVisible && targetForm) {
+                targetForm.style.display = "block";
+                container.classList.add("eval-visible");
+                panel.querySelector('[data-eval-std="' + std + '"]').classList.add("eval-active");
+            } else {
+                container.classList.remove("eval-visible");
+            }
+        }
+
+        // Initialize all eval panels
+        document.querySelectorAll(".evidence-eval-panel").forEach(function(panel) {
+            loadFormValues(panel);
+            updateToggleButtons(panel);
+
+            // Toggle button clicks
+            panel.querySelectorAll(".eval-toggle-btn").forEach(function(btn) {
+                btn.addEventListener("click", function() {
+                    var std = btn.getAttribute("data-eval-std");
+                    toggleStdForm(panel, std);
+                });
+            });
+
+            // Field change handlers
+            panel.querySelectorAll("[data-eval-field]").forEach(function(field) {
+                field.addEventListener("change", function() {
+                    handleFieldChange(panel, field);
+                });
+                field.addEventListener("input", function() {
+                    handleFieldChange(panel, field);
+                });
+            });
+
+            panel.querySelectorAll(".eval-export-cb").forEach(function(cb) {
+                cb.addEventListener("change", function() {
+                    var k = panel.getAttribute("data-eval-key");
+                    var d = readEval(k);
+                    if (!d.exportInclude) d.exportInclude = {};
+                    d.exportInclude[cb.getAttribute("data-export-std")] = !!cb.checked;
+                    saveEval(k, d);
+                    updatePdfPanelCounts();
+                });
+            });
+
+            var techBtn = panel.querySelector(".eval-techref-btn");
+            if (techBtn) {
+                techBtn.addEventListener("click", function() {
+                    mergeTechnicalRefFromTextarea(panel);
+                });
+            }
+
+            var nvdBtn = panel.querySelector(".eval-nvd-fetch-btn");
+            if (nvdBtn) {
+                nvdBtn.addEventListener("click", function() {
+                    fetchNvdCvssForPanel(panel);
+                });
+            }
+
+            var suggestBtn = panel.querySelector(".eval-suggest-btn");
+            if (suggestBtn) {
+                suggestBtn.addEventListener("click", function() {
+                    applyEvidenceSuggestions(panel);
+                });
+            }
+        });
+
+        // =========================================================================
+        // Risk JSON export (annex checkboxes: Export ▾ menu in overview)
+        // =========================================================================
+        var pdfExportBtn = document.getElementById("pdf-export-btn");
+
+        // Count evaluations per standard
+        function countEvaluations() {
+            var counts = { cvss: 0, iso: 0, bsi: 0, nist: 0 };
+            var allData = [];
+
+            document.querySelectorAll(".evidence-eval-panel").forEach(function(panel) {
+                var key = panel.getAttribute("data-eval-key");
+                var idx = panel.getAttribute("data-eval-index");
+                var data = readEval(key);
+                data.key = key;
+                data.evidenceIndex = idx;
+                data.eid = "E" + idx;
+
+                if (checkReadiness("cvss", data).ready && rowExportsForCount(data, "cvss")) counts.cvss++;
+                if (checkReadiness("iso", data).ready && rowExportsForCount(data, "iso")) counts.iso++;
+                if (checkReadiness("bsi", data).ready && rowExportsForCount(data, "bsi")) counts.bsi++;
+                if (checkReadiness("nist", data).ready && rowExportsForCount(data, "nist")) counts.nist++;
+
+                allData.push(data);
+            });
+
+            return { counts: counts, data: allData };
+        }
+
+        function updatePdfPanelCounts() {
+            var result = countEvaluations();
+            var counts = result.counts;
+
+            ["cvss", "iso", "bsi", "nist"].forEach(function(std) {
+                var countEl = document.getElementById("pdf-count-" + std);
+                var checkbox = document.getElementById("pdf-include-" + std);
+                var label = checkbox ? checkbox.nextElementSibling : null;
+
+                if (countEl) {
+                    countEl.textContent = counts[std] + " entries";
+                }
+                if (checkbox && label) {
+                    if (counts[std] === 0) {
+                        checkbox.disabled = true;
+                        checkbox.checked = false;
+                        label.classList.add("disabled");
+                    } else {
+                        checkbox.disabled = false;
+                        checkbox.checked = true;
+                        label.classList.remove("disabled");
+                    }
+                }
+            });
+
+            // Store data for PDF export
+            storeExportData(result.data);
+        }
+        try { window.cosmicUpdatePdfPanelCounts = updatePdfPanelCounts; } catch (eW) {}
+
+        function storeExportData(data) {
+            var exportDiv = document.getElementById("cosmic-eval-export");
+            if (!exportDiv) return;
+
+            function _chk(id) {
+                var el = document.getElementById(id);
+                return !!(el && el.checked);
+            }
+            var payload = {
+                version: "1.0",
+                generated: new Date().toISOString(),
+                pdfInclude: {
+                    cvss: _chk("pdf-include-cvss"),
+                    iso: _chk("pdf-include-iso"),
+                    bsi: _chk("pdf-include-bsi"),
+                    nist: _chk("pdf-include-nist")
+                },
+                evaluations: {}
+            };
+
+            data.forEach(function(d) {
+                payload.evaluations[d.key] = d;
+            });
+
+            exportDiv.textContent = JSON.stringify(payload);
+        }
+
+        // PDF Export button handler
+        if (pdfExportBtn) {
+            pdfExportBtn.addEventListener("click", function() {
+                // Update flags before export
+                function _chk2(id) {
+                    var el = document.getElementById(id);
+                    return !!(el && el.checked);
+                }
+                var flags = {
+                    cvss: _chk2("pdf-include-cvss"),
+                    iso: _chk2("pdf-include-iso"),
+                    bsi: _chk2("pdf-include-bsi"),
+                    nist: _chk2("pdf-include-nist")
+                };
+
+                var result = countEvaluations();
+                var payload = {
+                    version: "1.0",
+                    generated: new Date().toISOString(),
+                    pdfInclude: flags,
+                    evaluations: {}
+                };
+                result.data.forEach(function(d) {
+                    payload.evaluations[d.key] = d;
+                });
+
+                // Store in hidden div
+                var exportDiv = document.getElementById("cosmic-eval-export");
+                if (exportDiv) {
+                    exportDiv.textContent = JSON.stringify(payload);
+                }
+
+                // Trigger download of JSON for pdf_export.py
+                var blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement("a");
+                a.href = url;
+                a.download = "risk_evaluations.json";
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                alert("Risk evaluations exported as JSON.\\n\\nDIN PDF (Chromium) with annexes:\\n  python3 pdf_export.py --din --eval risk_evaluations.json merged_scan.xml\\n\\n(merged_scan.xml is next to where you ran evidence2html.py — not report.html!)");
+            });
+        }
+
+        // Initial count update
+        updatePdfPanelCounts();
     })();
 })();
 ]]></script>

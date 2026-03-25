@@ -2,7 +2,7 @@
 
 Collect pen-test tool output in one folder, run a short interactive CLI, get a **single self-contained HTML report** (Nmap merge + evidence + optional ASCII banner). Optional **PDFs**: 16:9 slide-style from the HTML, and **DIN-style A4** matching `pdf_export.py` (same sections: cover, contents, executive summary, findings, services, scans, evidence).
 
-![Overview: scope, ASCII banner, analyst note, themes](readme_png/2026-03-23_14-52.png)
+![Scan summary, theme, ASCII banner, export menu](readme_png/2026-03-25_21-02.png)
 
 ## Requirements
 
@@ -15,7 +15,7 @@ No pip dependencies.
 ## Quick start
 
 ```bash
-git clone https://github.com/CosmicSlothOracle/evididencetohtml.git
+git clone https://github.com/CosmicSlothOracle/evidence2html.git
 cd evididencetohtml
 python3 evidence2html.py
 ```
@@ -26,20 +26,18 @@ You’ll be prompted for the evidence directory and output name. The script find
 
 - **Scope block**: target, scan time, counts, tools list — fields are editable; values are stored in the browser (`localStorage`) for your session.
 - **ASCII art**: optional `ascii_arts/*.txt` next to the repo or under your evidence folder; themes in the sidebar swap palette and pick a matching banner when available.
-- **Port matrix**: per-port status, service, version, **extra info**, **analyst notes**, and scan command rows with editable notes.
+- **Port matrix**: per-port status, service, version, **extra info**, **analyst notes**, and scan command rows with editable notes. DIN 5008 cover fields live in the header area for browser PDF export.
 
-![Port matrix](readme_png/2026-03-23_14-54_1.png)
+![Port matrix, cover fields, command context, evidence refs](readme_png/2026-03-25_21-00.png)
 
-![Port row: analyst note and command context](readme_png/2026-03-23_14-54.png)
+- **Evidence**: each artifact is expandable; you can edit title, summary, raw text, and **comments**. References `E1`…`En` can be used in notes for jump links. Optional per-finding **risk** panels (CVSS, ISO 27005, BSI, NIST) tie into annex material when you export `risk_evaluations.json` / use the PDF panel.
 
-- **Evidence**: each artifact is expandable; you can edit title, summary, raw text, and **comments**. References `E1`…`En` can be used in notes for jump links.
-
-![Evidence list and comment field](readme_png/2026-03-23_14-56.png)
+![Evidence, risk assessment UI, ISO 27005 annex in PDF](readme_png/2026-03-25_20-55.png)
 
 - **Export HTML**: downloads the current page (including your edits in the DOM at click time).
 - **Export DIN 5008 PDF**: opens a **print** window whose layout matches the Python `generate_din5008_pdf` output. Before building, it **pulls in `localStorage`** (evidence edits, port/command notes, scope, hero note, DIN cover fields) so the PDF reflects what you typed in the browser.
 
-![DIN-style PDF: contents and executive summary](readme_png/2026-03-23_14-58.png)
+![DIN-style PDF: structure, summary tables, services, evidence](readme_png/2026-03-25_21-03.png)
 
 CLI-generated DIN PDF uses the same structure from `merged_scan.xml`; browser export adds your **live annotations** on top.
 
@@ -58,7 +56,7 @@ my_run/
 
 ## Naming hints
 
-Files are classified by prefix (`evidence_ffuf_*`, `evidence_sqlmap_*`, `banner_*`, …). See the table in earlier docs or `evidence2html.py` (`infer_tool` / collectors) if you need the full list.
+Files are classified by prefix (`evidence_ffuf_*`, `evidence_sqlmap_*`, `banner_*`, …). See `evidence2html.py` (`infer_tool` / collectors) if you need the full list.
 
 ## Repo layout
 
@@ -67,6 +65,7 @@ Files are classified by prefix (`evidence_ffuf_*`, `evidence_sqlmap_*`, `banner_
 | `evidence2html.py` | Interactive pipeline, merge, optional PDFs |
 | `cosmic_clean.xsl` | HTML + in-browser export logic |
 | `pdf_export.py` | Chromium PDF helpers (16:9 + DIN from XML) |
+| `risk_metrics.py`, `vuln_ref_lookup.py`, `nvd_cve_lookup.py` | Risk annexes + CVE reference lookup |
 
 ## License
 
