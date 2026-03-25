@@ -43,8 +43,8 @@ Pick your evidence folder and report name; the tool merges what it finds and ope
 
 -**Notes** - Export and autoformat after DIn5008 all notes and edits
            
- -**Attention**  - ! EDITS and NOTES live only in your BROWSERCHACHE !
-                 - ! CLEAR YOUR CHACHE YOU WILL LOOSE ALL EDITS !
+ -**Attention**  - ! EDITS and NOTES live only in your BROWSERCACHE !
+                 - ! CLEAR YOUR CACHE YOU WILL LOOSE ALL EDITS !
                  - If there is new evidence to be added after editing rerun evidence2html.py 
                    match the absolute path (DIR+NAME must match) and open the browser you used to edit.
 
