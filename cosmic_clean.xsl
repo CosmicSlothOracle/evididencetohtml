@@ -895,6 +895,37 @@
         .box-btn-add { margin: 10px 0; padding: 8px; border: 2px dashed var(--outline); background: rgba(0,0,0,0.1); color: var(--text-muted); cursor: pointer; text-align: center; border-radius: 8px; transition: all 0.2s; }
         .box-btn-add:hover { background: rgba(var(--proto-1-rgb, 246, 205, 38), 0.1); color: var(--paper); border-color: var(--accent); }
 
+        /* EXECUTIVE SUMMARY STYLES */
+        .executive-summary-box { background: var(--bg-panel); border: 2px solid var(--accent); border-radius: 12px; padding: 24px; margin-bottom: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+        .executive-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--retro-3); padding-bottom: 12px; margin-bottom: 20px; }
+        .executive-header h1 { margin: 0; color: var(--accent); font-size: 1.8rem; text-transform: uppercase; letter-spacing: 0.1em; }
+        .at-a-glance-container { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; background: rgba(0,0,0,0.2); padding: 20px; border-radius: 8px; border: 1px solid var(--retro-3); margin-bottom: 24px; }
+        .severity-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+        .severity-card { display: flex; flex-direction: column; align-items: center; padding: 10px; border-radius: 6px; border: 1px solid var(--outline); background: var(--retro-2); }
+        .severity-card .count { font-size: 1.5rem; font-weight: 700; margin-bottom: 4px; }
+        .severity-card .label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.8; }
+        .severity-card.critical { border-color: #ff3e3e; color: #ff3e3e; background: rgba(255, 62, 62, 0.1); }
+        .severity-card.high { border-color: #ff8c00; color: #ff8c00; background: rgba(255, 140, 0, 0.1); }
+        .severity-card.medium { border-color: #ffd700; color: #ffd700; background: rgba(255, 215, 0, 0.1); }
+        .severity-card.low { border-color: #00fa9a; color: #00fa9a; background: rgba(0, 250, 154, 0.1); }
+        .severity-card.info { border-color: #1e90ff; color: #1e90ff; background: rgba(30, 144, 255, 0.1); }
+        .summary-text-block { margin-bottom: 20px; }
+        .summary-text-block h3 { color: var(--accent); border-left: 4px solid var(--accent); padding-left: 12px; margin-bottom: 12px; }
+        .summary-grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        .top-risks-list { list-style: none; padding: 0; }
+        .top-risk-item { background: var(--retro-1); border: 1px solid var(--retro-3); border-left: 4px solid var(--bad); padding: 12px; border-radius: 0 6px 6px 0; margin-bottom: 10px; }
+        .top-risk-title { font-weight: 700; color: var(--paper); margin-bottom: 4px; display: block; }
+        .top-risk-detail { font-size: 0.85rem; opacity: 0.9; line-height: 1.4; }
+        .priority-list { list-style: none; padding: 0; }
+        .priority-item { display: flex; gap: 12px; margin-bottom: 8px; align-items: flex-start; }
+        .priority-label { min-width: 100px; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; padding: 4px 8px; border-radius: 4px; text-align: center; }
+        .priority-label.p1 { background: var(--bad); color: #fff; }
+        .priority-label.p2 { background: var(--warn); color: var(--retro-black); }
+        .priority-label.p3 { background: var(--retro-3); color: var(--paper); }
+        .priority-text { flex: 1; font-size: 0.88rem; padding-top: 2px; }
+        .executive-summary-box .inline-cell-editor { min-height: 1.6rem; font-size: 0.9rem; }
+        .executive-summary-box .analysis-inline-editor { min-height: 60px; }
+
         .global-editor-panel {
             position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
             background: var(--bg-panel); border: 3px solid var(--accent); border-radius: 12px;
@@ -971,6 +1002,112 @@
     <xsl:variable name="first_os" select="/nmaprun/host[1]/os/osmatch[1]/@name"/>
 
     <div id="cosmic-modular-container" class="cosmic-modular-container">
+    <div class="executive-summary-box section-edit-locked" id="section-executive">
+        <div class="box-header-actions">
+            <span class="box-drag-handle" title="Drag to reorder section">⋮⋮</span>
+            <button type="button" class="box-btn-reset" data-section-reset="section-executive" title="Reset this section to default">↺</button>
+            <button type="button" class="box-btn-remove" title="Remove section">×</button>
+        </div>
+        <div class="executive-header">
+            <h1>Executive Summary</h1>
+            <div>
+                <button type="button" class="section-edit-btn section-edit-toggle" data-section="section-executive">Edit</button>
+                <span class="section-edit-hint">Locked</span>
+            </div>
+        </div>
+
+        <div class="summary-text-block">
+            <h3>Context &amp; Scope</h3>
+            <div class="inline-cell-editor" contenteditable="true" data-scope-key="exec_context" data-placeholder="Describe the assessment period, goals, and target assets (e.g., external attack surface)."></div>
+        </div>
+
+        <div class="at-a-glance-container">
+            <div class="summary-text-block" style="margin-bottom:0;">
+                <h3 style="border-left-color: var(--retro-3);">At a Glance</h3>
+                <div class="severity-grid">
+                    <div class="severity-card critical">
+                        <span class="count"><xsl:value-of select="number(/nmaprun/cosmicmeta/summary/@threat_critical | 0)"/></span>
+                        <span class="label">Critical</span>
+                    </div>
+                    <div class="severity-card high">
+                        <span class="count"><xsl:value-of select="number(/nmaprun/cosmicmeta/summary/@threat_high | 0)"/></span>
+                        <span class="label">High</span>
+                    </div>
+                    <div class="severity-card medium">
+                        <span class="count"><xsl:value-of select="number(/nmaprun/cosmicmeta/summary/@threat_medium | 0)"/></span>
+                        <span class="label">Medium</span>
+                    </div>
+                    <div class="severity-card low">
+                        <span class="count"><xsl:value-of select="number(/nmaprun/cosmicmeta/summary/@threat_low | 0)"/></span>
+                        <span class="label">Low</span>
+                    </div>
+                    <div class="severity-card info">
+                        <span class="count"><xsl:value-of select="number(/nmaprun/cosmicmeta/summary/@threat_info | 0)"/></span>
+                        <span class="label">Info</span>
+                    </div>
+                </div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <div class="summary-text-block" style="margin-bottom:0;">
+                    <h4 style="margin:0 0 4px 0; font-size:0.75rem; text-transform:uppercase; opacity:0.8;">Overall Risk</h4>
+                    <div class="inline-cell-editor" contenteditable="true" data-scope-key="exec_overall_risk" data-placeholder="Summarize the overall risk state (e.g., 'Predominantly medium to high')."></div>
+                </div>
+                <div class="summary-text-block" style="margin-bottom:0;">
+                    <h4 style="margin:0 0 4px 0; font-size:0.75rem; text-transform:uppercase; opacity:0.8;">Exploitability &amp; Impact</h4>
+                    <div class="inline-cell-editor" contenteditable="true" data-scope-key="exec_impact" data-placeholder="Optional: Brief sentence on the potential business impact."></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="summary-grid-2col">
+            <div class="summary-text-block">
+                <h3>Top Risks</h3>
+                <div class="top-risks-list">
+                    <div class="top-risk-item">
+                        <div class="inline-cell-editor top-risk-title" contenteditable="true" data-scope-key="exec_risk1_title" data-placeholder="Risk 1 Title"></div>
+                        <div class="inline-cell-editor top-risk-detail" contenteditable="true" data-scope-key="exec_risk1_desc" data-placeholder="Impact, cause, and benefit of remediation."></div>
+                    </div>
+                    <div class="top-risk-item">
+                        <div class="inline-cell-editor top-risk-title" contenteditable="true" data-scope-key="exec_risk2_title" data-placeholder="Risk 2 Title"></div>
+                        <div class="inline-cell-editor top-risk-detail" contenteditable="true" data-scope-key="exec_risk2_desc" data-placeholder="Impact, cause, and benefit of remediation."></div>
+                    </div>
+                    <div class="top-risk-item">
+                        <div class="inline-cell-editor top-risk-title" contenteditable="true" data-scope-key="exec_risk3_title" data-placeholder="Risk 3 Title"></div>
+                        <div class="inline-cell-editor top-risk-detail" contenteditable="true" data-scope-key="exec_risk3_desc" data-placeholder="Impact, cause, and benefit of remediation."></div>
+                    </div>
+                </div>
+            </div>
+            <div class="summary-text-block">
+                <h3>Key Observations</h3>
+                <div class="inline-cell-editor analysis-inline-editor" contenteditable="true" data-scope-key="exec_observations" data-placeholder="• Recurring patterns (e.g., missing hardening)\n• Positive observations (what worked well)"></div>
+            </div>
+        </div>
+
+        <div class="summary-grid-2col">
+            <div class="summary-text-block">
+                <h3>Next Steps &amp; Recommendations</h3>
+                <div class="priority-list">
+                    <div class="priority-item">
+                        <span class="priority-label p1">Immediate</span>
+                        <div class="inline-cell-editor priority-text" contenteditable="true" data-scope-key="exec_next_immediate" data-placeholder="Critical patches, direct exposures..."></div>
+                    </div>
+                    <div class="priority-item">
+                        <span class="priority-label p2">Next 30 Days</span>
+                        <div class="inline-cell-editor priority-text" contenteditable="true" data-scope-key="exec_next_short" data-placeholder="Configuration changes, hardening..."></div>
+                    </div>
+                    <div class="priority-item">
+                        <span class="priority-label p3">Long-term</span>
+                        <div class="inline-cell-editor priority-text" contenteditable="true" data-scope-key="exec_next_long" data-placeholder="Monitoring, architecture, training..."></div>
+                    </div>
+                </div>
+            </div>
+            <div class="summary-text-block">
+                <h3>Methodology &amp; Disclaimer</h3>
+                <div class="inline-cell-editor" contenteditable="true" data-scope-key="exec_methodology" data-placeholder="Test type (Black/Grey/Lightbox), tooling used, and standard disclaimer."></div>
+            </div>
+        </div>
+    </div>
+
     <div class="overview-16x9 section-edit-locked" id="section-overview">
         <div class="box-header-actions">
             <span class="box-drag-handle" title="Drag to reorder section">⋮⋮</span>
@@ -1022,6 +1159,9 @@
                             <button type="button" class="export-menu-item" id="export-do-169" role="menuitem">Slides 16:9 (print / Save as PDF)</button>
                             <button type="button" class="export-menu-item" id="export-do-reader" role="menuitem">Reader A4 (print / Save as PDF)</button>
                             <button type="button" class="export-menu-item" id="export-do-html" role="menuitem">Save full HTML</button>
+                            <hr class="export-menu-divider"/>
+                            <button type="button" class="export-menu-item" id="export-do-exec-html" role="menuitem">Executive HTML (non-technical)</button>
+                            <button type="button" class="export-menu-item" id="export-do-exec-pdf" role="menuitem">Executive PDF (non-technical)</button>
                             <hr class="export-menu-divider"/>
                             <p class="export-menu-label">risk_evaluations.json — annexes</p>
                             <div id="pdf-export-panel">
@@ -3084,6 +3224,289 @@ service=<xsl:value-of select="$port_result/@service"/> version=<xsl:value-of sel
         win.focus();
         win.onload = function () { setTimeout(function () { win.print(); }, 450); };
     }
+
+    // =========================================================================
+    // Executive exports (non-technical)
+    // =========================================================================
+    function extractThemeTokensForExport() {
+        var cs = getComputedStyle(document.documentElement);
+        function gv(name, fallback) {
+            try {
+                var v = (cs.getPropertyValue(name) || "").trim();
+                return v || fallback || "";
+            } catch (e) {
+                return fallback || "";
+            }
+        }
+        return {
+            accent: gv("--accent", "#ff3e3e"),
+            bgMain: gv("--bg-main", gv("--retro-0", "#0b0b0b")),
+            bgPanel: gv("--bg-panel", gv("--retro-1", "#0f172a")),
+            bgCard: gv("--bg-card", gv("--retro-2", "#111827")),
+            textMain: gv("--text-main", "#e5e7eb"),
+            textMuted: gv("--text-muted", "#9ca3af"),
+            outline: gv("--outline", "#111111"),
+            ok: gv("--ok", "#00fa9a"),
+            warn: gv("--warn", "#ffd700"),
+            bad: gv("--bad", "#ff3e3e"),
+            paper: gv("--paper", "#ffffff")
+        };
+    }
+
+    function cleanExecutiveText(txt) {
+        if (txt == null) return "";
+        var t = ("" + txt);
+        // Remove evidence IDs / references / CVEs / URLs so exec stays non-technical.
+        t = t.replace(/\bE\d+\b/g, "");
+        t = t.replace(/\bCVE-\d{4}-\d+\b/gi, "");
+        t = t.replace(/\bhttps?:\/\/\S+/gi, "");
+        t = t.replace(/\s+/g, " ").trim();
+        return t;
+    }
+
+    function getSeverityCountsFromExecutiveBox() {
+        var sec = document.getElementById("section-executive");
+        var out = { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
+        if (!sec) return out;
+        ["critical", "high", "medium", "low", "info"].forEach(function (k) {
+            var card = sec.querySelector(".severity-card." + k);
+            if (!card) return;
+            var cEl = card.querySelector(".count");
+            var n = parseInt((cEl && cEl.textContent) ? cEl.textContent.trim() : "0", 10);
+            if (!isNaN(n)) out[k] = n;
+        });
+        return out;
+    }
+
+    function deriveOverallRiskTextFromCounts(counts) {
+        // Simple mapping to a board-friendly statement.
+        if (!counts) return "";
+        if (counts.critical > 0) return "Hoch";
+        if (counts.high > 0) return "Mittel bis hoch";
+        if (counts.medium > 0) return "Mittel";
+        if (counts.low > 0) return "Niedrig";
+        if (counts.info > 0) return "Information";
+        return "Keine belastbaren Ergebnisse";
+    }
+
+    function execValueFromDom(scopeEl, dataScopeKey) {
+        if (!scopeEl) return "";
+        var node = scopeEl.querySelector('[data-scope-key="' + dataScopeKey + '"]');
+        if (!node) return "";
+        return cleanExecutiveText(stripWhitespace(textContentSafe(node)));
+    }
+
+    function formatExecMultiline(plainText) {
+        var t = (plainText || "").replace(/\r\n/g, "\n").replace(/\r/g, "\n").trim();
+        if (!t) return "";
+        return htmlEscape(t).replace(/\n/g, "<br>");
+    }
+
+    function buildExecutiveReportHtmlDocument(opts) {
+        var opt = opts || {};
+        var execSec = document.getElementById("section-executive");
+        if (!execSec) return "";
+
+        var onlyVisibleEvidence = !!opt.onlyVisibleEvidence;
+        if (opt.onlyVisibleEvidence == null && typeof dinOnlyVisibleFromExportCheckbox === "function") {
+            onlyVisibleEvidence = dinOnlyVisibleFromExportCheckbox();
+        }
+
+        var tokens = extractThemeTokensForExport();
+        var scope = gatherScopeMetrics();
+        var coverOrg = cleanExecutiveText(scope.din_organisation || "");
+        var coverClient = cleanExecutiveText(scope.din_auftraggeber || "");
+        var coverTester = cleanExecutiveText(scope.din_pruefer || "");
+        var coverConf = cleanExecutiveText(scope.din_vertraulichkeit || "");
+
+        var counts = getSeverityCountsFromExecutiveBox();
+        var evidenceCount = gatherEvidenceRows(onlyVisibleEvidence).length;
+        var findingCount = gatherFindingsFromDom().length;
+
+        var exec = {
+            context: execValueFromDom(execSec, "exec_context"),
+            overallRisk: execValueFromDom(execSec, "exec_overall_risk"),
+            impact: execValueFromDom(execSec, "exec_impact"),
+            risk1Title: execValueFromDom(execSec, "exec_risk1_title"),
+            risk1Desc: execValueFromDom(execSec, "exec_risk1_desc"),
+            risk2Title: execValueFromDom(execSec, "exec_risk2_title"),
+            risk2Desc: execValueFromDom(execSec, "exec_risk2_desc"),
+            risk3Title: execValueFromDom(execSec, "exec_risk3_title"),
+            risk3Desc: execValueFromDom(execSec, "exec_risk3_desc"),
+            observations: execValueFromDom(execSec, "exec_observations"),
+            nextImmediate: execValueFromDom(execSec, "exec_next_immediate"),
+            nextShort: execValueFromDom(execSec, "exec_next_short"),
+            nextLong: execValueFromDom(execSec, "exec_next_long"),
+            methodology: execValueFromDom(execSec, "exec_methodology"),
+        };
+
+        if (!exec.overallRisk) exec.overallRisk = deriveOverallRiskTextFromCounts(counts);
+
+        var basisSentence = "";
+        if (evidenceCount || findingCount) {
+            basisSentence = "Diese Einschätzung basiert auf " + findingCount + " strukturierten Befunden und " + evidenceCount + " ausgewerteten Evidence-Artefakten im Bericht.";
+        } else {
+            basisSentence = "Diese Einschätzung basiert auf den im Bericht enthaltenen Ergebnissen.";
+        }
+
+        function sevPill(label, value, color) {
+            var n = parseInt(value || 0, 10);
+            return "<div class=\"sev-pill\" title=\"" + htmlEscape(label) + "\"><div class=\"sev-num\" style=\"background:" + color + \";\">" + n + "</div><div class=\"sev-lab\">" + htmlEscape(label) + "</div></div>";
+        }
+
+        // Map severity counts to a light badge scheme.
+        var pillCritical = tokens.bad || "#ff3e3e";
+        var pillHigh = tokens.warn || "#ff8c00";
+        var pillMedium = tokens.warn || "#ffd700";
+        var pillLow = tokens.ok || "#00fa9a";
+        var pillInfo = tokens.accent || "#1e90ff";
+
+        var html = "";
+        html += "<!DOCTYPE html><html lang=\"de\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">";
+        html += "<title>Executive Report</title>";
+        html += "<style>";
+        html += ":root{--accent:" + tokens.accent + ";--bg-main:" + tokens.bgMain + ";--bg-panel:" + tokens.bgPanel + ";--bg-card:" + tokens.bgCard + ";--text-main:" + tokens.textMain + ";--text-muted:" + tokens.textMuted + ";--outline:" + tokens.outline + ";}";
+        html += "body{margin:0;background:var(--bg-main);color:var(--text-main);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;}";
+        html += ".exec-wrap{max-width:1100px;margin:0 auto;padding:26px 22px 48px;}";
+        html += ".exec-header{display:flex;gap:18px;align-items:flex-start;justify-content:space-between;margin-bottom:18px;}";
+        html += ".exec-brand{flex:1;}";
+        html += ".exec-title{font-size:20px;font-weight:800;letter-spacing:0.2px;margin:0 0 6px;}";
+        html += ".exec-sub{color:var(--text-muted);font-size:12.5px;line-height:1.4;margin:0;}";
+        html += ".exec-cover{background:var(--bg-panel);border:1px solid var(--outline);border-radius:14px;padding:14px 16px;min-width:300px;}";
+        html += ".cover-row{display:flex;justify-content:space-between;gap:12px;margin:6px 0;font-size:12.5px;}";
+        html += ".cover-k{color:var(--text-muted);font-weight:700;}";
+        html += ".cover-v{font-weight:600;text-align:right;word-break:break-word;}";
+        html += ".cards{display:grid;grid-template-columns:1fr;gap:14px;margin-top:14px;}";
+        html += ".card{background:var(--bg-panel);border:1px solid var(--outline);border-radius:14px;padding:16px 16px 18px;}";
+        html += ".card h2{margin:0 0 10px;font-size:14px;letter-spacing:0.3px;text-transform:uppercase;color:var(--text-muted);}";
+        html += ".card p{margin:0 0 10px;line-height:1.45;font-size:13.5px;color:var(--text-main);}";
+        html += ".exec-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}";
+        html += ".risk-block{display:flex;flex-direction:column;gap:6px;}";
+        html += ".risk-title{font-weight:900;font-size:13.5px;margin:0;}";
+        html += ".risk-desc{color:var(--text-muted);font-size:13px;line-height:1.45;}";
+        html += ".sev-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:10px;}";
+        html += ".sev-pill{border:1px solid var(--outline);border-radius:10px;padding:8px 8px;text-align:center;background:var(--bg-card);}";
+        html += ".sev-num{display:inline-block;color:#fff;font-weight:900;font-size:15px;line-height:1;padding:5px 10px;border-radius:999px;}";
+        html += ".sev-lab{font-size:11px;color:var(--text-muted);text-transform:uppercase;margin-top:6px;letter-spacing:0.05em;}";
+        html += ".basis{background:var(--bg-card);border:1px dashed var(--outline);border-radius:12px;padding:12px 12px;margin-top:10px;color:var(--text-muted);font-size:13px;}";
+        html += ".prio{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}";
+        html += ".prio .pitem{background:var(--bg-card);border:1px solid var(--outline);border-radius:12px;padding:10px 10px;}";
+        html += ".pitem .plab{font-size:11px;color:var(--text-muted);font-weight:900;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;}";
+        html += ".pitem .pval{font-weight:800;font-size:13px;line-height:1.35;}";
+        html += "@media print{.exec-wrap{padding:0;max-width:none;} .exec-cover{min-width:auto;} .exec-grid-2{grid-template-columns:1fr;} .prio{grid-template-columns:1fr;} .sev-row{grid-template-columns:repeat(2,1fr);} .card{break-inside:avoid;}}";
+        html += "</style></head><body>";
+        html += "<div class=\"exec-wrap\">";
+        html += "<div class=\"exec-header\">";
+        html += "<div class=\"exec-brand\">";
+        html += "<div class=\"exec-title\">Executive Summary</div>";
+        html += "<p class=\"exec-sub\">Überblick für Führung &amp; Entscheidungsprozesse — ohne technische Details.</p>";
+        html += "</div>";
+        html += "<div class=\"exec-cover\">";
+        if (coverOrg) html += "<div class=\"cover-row\"><div class=\"cover-k\">Organisation</div><div class=\"cover-v\">" + formatExecMultiline(coverOrg) + "</div></div>";
+        if (coverClient) html += "<div class=\"cover-row\"><div class=\"cover-k\">Client</div><div class=\"cover-v\">" + formatExecMultiline(coverClient) + "</div></div>";
+        if (coverTester) html += "<div class=\"cover-row\"><div class=\"cover-k\">Tester</div><div class=\"cover-v\">" + formatExecMultiline(coverTester) + "</div></div>";
+        if (coverConf) html += "<div class=\"cover-row\"><div class=\"cover-k\">Vertraulichkeit</div><div class=\"cover-v\">" + formatExecMultiline(coverConf) + "</div></div>";
+        html += "</div></div>";
+
+        html += "<div class=\"cards\">";
+        html += "<div class=\"card\">";
+        html += "<h2>Kernaussagen</h2>";
+        if (exec.overallRisk) html += "<p><strong>Gesamteinschätzung:</strong> " + htmlEscape(exec.overallRisk) + "</p>";
+        if (exec.context) html += "<p>" + formatExecMultiline(exec.context) + "</p>";
+        if (exec.impact) html += "<p><strong>Potenzielle Auswirkungen:</strong> " + formatExecMultiline(exec.impact) + "</p>";
+        html += "<div class=\"sev-row\">";
+        html += sevPill("Critical", counts.critical, pillCritical);
+        html += sevPill("High", counts.high, pillHigh);
+        html += sevPill("Medium", counts.medium, pillMedium);
+        html += sevPill("Low", counts.low, pillLow);
+        html += sevPill("Info", counts.info, pillInfo);
+        html += "</div>";
+        html += "<div class=\"basis\">" + htmlEscape(basisSentence) + "</div>";
+        if (exec.risk1Title || exec.risk1Desc || exec.risk2Title || exec.risk2Desc || exec.risk3Title || exec.risk3Desc) {
+            html += "<div class=\"exec-grid-2\" style=\"margin-top:14px;\">";
+            function renderRisk(slot) {
+                var tKey = "risk" + slot + "Title";
+                var dKey = "risk" + slot + "Desc";
+                var t = exec[tKey] || "";
+                var d = exec[dKey] || "";
+                if (!t && !d) return "";
+                var out = "<div class=\"risk-block\">";
+                if (t) out += "<div class=\"risk-title\">" + htmlEscape(t) + "</div>";
+                if (d) out += "<div class=\"risk-desc\">" + formatExecMultiline(d) + "</div>";
+                out += "</div>";
+                return out;
+            }
+            html += renderRisk(1);
+            html += renderRisk(2);
+            html += renderRisk(3);
+            html += "</div>";
+        }
+        html += "</div>";
+
+        // Risk monitoring summary
+        html += "<div class=\"card\">";
+        html += "<h2>Sicherheitslage: Kurzüberblick</h2>";
+        if (exec.observations) html += "<p>" + formatExecMultiline(exec.observations) + "</p>";
+        if (exec.methodology) html += "<p><strong>Vorgehen:</strong> " + formatExecMultiline(exec.methodology) + "</p>";
+        html += "</div>";
+
+        // Threat summary (condensed from risk titles/descriptions)
+        html += "<div class=\"card\">";
+        html += "<h2>Zentrale Bedrohungen</h2>";
+        var threatBits = [];
+        if (exec.risk1Title) threatBits.push(exec.risk1Title);
+        if (exec.risk2Title) threatBits.push(exec.risk2Title);
+        if (exec.risk3Title) threatBits.push(exec.risk3Title);
+        var threatText = threatBits.length ? threatBits.join(" · ") : "";
+        if (threatText) html += "<p>" + htmlEscape(threatText) + "</p>";
+        html += "</div>";
+
+        // Incident summary
+        html += "<div class=\"card\">";
+        html += "<h2>Auswirkungen im Testkontext</h2>";
+        var impactBits = [];
+        if (exec.impact) impactBits.push(exec.impact);
+        if (exec.context) impactBits.push(exec.context);
+        var impactText = impactBits.filter(Boolean).join(" ");
+        if (impactText) html += "<p>" + formatExecMultiline(impactText) + "</p>";
+        html += "</div>";
+
+        // Recommendations
+        html += "<div class=\"card\">";
+        html += "<h2>Empfohlene Maßnahmen</h2>";
+        html += "<div class=\"prio\">";
+        var pi1 = exec.nextImmediate || "";
+        var pi2 = exec.nextShort || "";
+        var pi3 = exec.nextLong || "";
+        html += "<div class=\"pitem\"><div class=\"plab\">Sofort</div><div class=\"pval\">" + (pi1 ? formatExecMultiline(pi1) : "<em>—</em>") + "</div></div>";
+        html += "<div class=\"pitem\"><div class=\"plab\">Nächste 30 Tage</div><div class=\"pval\">" + (pi2 ? formatExecMultiline(pi2) : "<em>—</em>") + "</div></div>";
+        html += "<div class=\"pitem\"><div class=\"plab\">Langfristig</div><div class=\"pval\">" + (pi3 ? formatExecMultiline(pi3) : "<em>—</em>") + "</div></div>";
+        html += "</div>";
+        html += "</div>";
+
+        html += "</div>"; // cards
+        html += "</div>"; // exec-wrap
+        html += "</body></html>";
+        return html;
+    }
+
+    function openExecutivePdfExport() {
+        var payload = buildExecutiveReportHtmlDocument({ forPrint: true });
+        if (!payload) {
+            window.alert("Executive PDF generation failed (empty payload).");
+            return;
+        }
+        var win = window.open("", "_blank");
+        if (!win) {
+            window.alert("Popup blocked. Allow popups for this domain and click Executive PDF again.");
+            return;
+        }
+        win.document.open();
+        win.document.write(payload);
+        win.document.close();
+        win.focus();
+        win.onload = function () { setTimeout(function () { win.print(); }, 150); };
+    }
     var PRINT_16X9_CSS = [
         "<style id=\"cosmic-16x9-print\">",
         "@page { size: 338mm 190mm; margin: 7mm 9mm; }",
@@ -3290,6 +3713,28 @@ service=<xsl:value-of select="$port_result/@service"/> version=<xsl:value-of sel
             a.href = URL.createObjectURL(new Blob([document.documentElement.outerHTML], { type: "text/html" }));
             a.download = "cosmic_report.html";
             a.click();
+        });
+
+        var bExecHtml = document.getElementById("export-do-exec-html");
+        if (bExecHtml) bExecHtml.addEventListener("click", function () {
+            setOpen(false);
+            flushBrowserCacheIntoDom();
+            var payload = buildExecutiveReportHtmlDocument({ forPrint: false });
+            if (!payload) {
+                window.alert("Executive HTML generation failed (empty payload).");
+                return;
+            }
+            var a = document.createElement("a");
+            a.href = URL.createObjectURL(new Blob([payload], { type: "text/html" }));
+            a.download = "executive_report.html";
+            a.click();
+        });
+
+        var bExecPdf = document.getElementById("export-do-exec-pdf");
+        if (bExecPdf) bExecPdf.addEventListener("click", function () {
+            setOpen(false);
+            flushBrowserCacheIntoDom();
+            openExecutivePdfExport();
         });
     })();
     var btnRisk = document.getElementById("btn-open-risk-panel");
